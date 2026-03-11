@@ -14,7 +14,7 @@
     <script>window.global=window;window.Buffer=window.buffer.Buffer;</script>
     <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.90.0/lib/index.iife.min.js"></script>
     <script src="https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
@@ -259,8 +259,7 @@
 // ==============================================
 const SUPABASE_URL    = 'https://mfdzlcfygbnpvmswjqdx.supabase.co';
 const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mZHpsY2Z5Z2JucHZtc3dqcWR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjExOTYsImV4cCI6MjA4ODc5NzE5Nn0.eTCRFaeyM4Qp48BD4O08QvrncfZ4ZddYu7U_Qftu1jA';
-const { createClient } = window.supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ==============================================
 // CONFIGURAZIONE GLOBALE
