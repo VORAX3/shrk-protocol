@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SHRK Protocol</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS0Y0K637H"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-LS0Y0K637H');</script>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    <script>window.global=window;window.Buffer=window.buffer.Buffer;</script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.90.0/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+        body{background:#000;overflow:hidden;font-family:'Inter',sans-serif;height:100vh;width:100vw;margin:0;padding:0;}
+        ::-webkit-scrollbar{display:none;}
+        @keyframes shake-damage{0%{transform:translate(0,0)}25%{transform:translate(6px,6px)}50%{transform:translate(-6px,-6px)}75%{transform:translate(6px,-6px)}100%{transform:translate(0,0)}}
+        @keyframes marquee{0%{transform:translate(0,0)}100%{transform:translate(-100%,0)}}
+        @keyframes slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+        .animate-slide-up{animation:slide-up 0.3s ease-out forwards;}
+        .bite-effect{animation:shake-damage 0.15s ease-in-out;filter:sepia(100%) saturate(1000%) hue-rotate(-50deg) brightness(0.7)!important;}
+        .tv-static{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:20;background:url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif');background-size:cover;mix-blend-mode:screen;opacity:0;transition:opacity 0.2s;}
+        .show-static{opacity:0.3!important;}
+        .marquee-container{overflow:hidden;white-space:nowrap;width:100%;}
+        .marquee-text{display:inline-block;padding-left:100%;animation:marquee 14s linear infinite;}
+    </style>
+</head>
+<body class="bg-black text-white">
+<div class="relative w-full h-full bg-black overflow-hidden">
+
+    <video id="main-video" onclick="togglePlay()" class="absolute inset-0 w-full h-full object-cover z-0" loop playsinline autoplay muted></video>
+    <div id="static-overlay" class="tv-static"></div>
+
+    <!-- SIGNAL LOST -->
+    <div id="signal-lost-overlay" class="hidden absolute inset-0 z-[60] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none" style="background:url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif');background-size:cover;"></div>
+        <div class="relative z-10 flex flex-col items-center w-full px-6">
+            <h2 class="text-5xl font-black text-red-600 tracking-[0.2em] uppercase mb-2 animate-pulse drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] text-center">Signal Lost</h2>
+            <p class="text-zinc-300 text-[10px] mb-10 text-center uppercase tracking-widest font-mono">Connection Severed.<br><span class="text-emerald-400 font-bold mt-2 block">Restore 90.000 HP — Pay in $SHRK</span></p>
+            <button id="btn-revive-video" onclick="reviveVideo()" class="relative group w-48 h-48 flex flex-col items-center justify-center bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-700 text-black rounded-full hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_60px_rgba(16,185,129,0.7)] border-4 border-black">
+                <i class="fas fa-heartbeat text-3xl mb-1 animate-pulse"></i>
+                <span class="text-xl font-black uppercase tracking-[0.2em] mb-2">REVIVE</span>
+                <div class="w-1/2 h-px bg-black/30 mb-2"></div>
+                <span class="text-base font-bold text-black/90">($2.99)</span>
+                <div id="revive-shrk-cost" class="text-[11px] font-black text-black/70 mt-1">Loading...</div>
+                <div class="absolute inset-0 rounded-full border-2 border-white/20 pointer-events-none"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- PLACEHOLDER -->
+    <div id="placeholder" onclick="startProtocol()" class="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black cursor-pointer transition-opacity duration-500">
+        <i class="fas fa-shark text-6xl mb-6 text-blue-600 animate-pulse"></i>
+        <h1 class="text-3xl font-black tracking-tighter mb-1">VORAX ZONE</h1>
+        <p class="text-[10px] font-mono text-blue-400 animate-pulse uppercase tracking-[0.3em]">Tap to Enter</p>
+    </div>
+
+    <div id="toast" class="absolute top-24 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full text-[10px] font-black transition-opacity opacity-0 z-[110] uppercase pointer-events-none"></div>
+
+    <!-- TOP BAR -->
+    <div class="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-center bg-gradient-to-b from-black to-transparent">
+        <button onclick="toggleDevMenu()" class="w-10 h-10 flex items-center justify-center text-white/50 hover:text-white transition active:scale-90"><i class="fas fa-cog text-xl"></i></button>
+        <button id="btn-wallet" onclick="connectWallet()" class="border-2 border-blue-500/50 bg-black px-4 py-2 rounded-lg text-[11px] font-mono font-bold flex items-center gap-2 active:scale-95 transition">
+            <span id="wallet-text" class="tracking-tighter">CONNECT WALLET</span>
+            <div id="wallet-dot" class="w-2 h-2 rounded-full bg-red-500"></div>
+        </button>
+    </div>
+
+    <!-- RIGHT BUTTONS -->
+    <div class="absolute right-3 bottom-36 flex flex-col gap-3 items-center z-50 w-14">
+        <a href="https://dexscreener.com/solana/9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY" target="_blank" class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex flex-col items-center justify-center active:scale-90 transition">
+            <i class="fas fa-rocket text-black text-base"></i>
+            <span class="text-[7px] font-black text-black uppercase">Buy</span>
+        </a>
+        <div class="relative active:scale-90 transition cursor-pointer" onclick="toggleFollow()">
+            <div class="w-10 h-10 rounded-full border-2 border-white/30 bg-zinc-900 flex items-center justify-center"><i class="fas fa-eye text-white text-lg"></i></div>
+            <div id="follow-badge" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center text-[8px] border border-black"><i class="fas fa-plus"></i></div>
+        </div>
+        <button class="flex flex-col items-center active:scale-75 transition" onclick="giveLike()">
+            <i id="like-icon" class="fas fa-anchor text-2xl text-white transition-colors duration-300"></i>
+            <span class="text-[9px] font-bold mt-0.5 text-white">Like</span>
+        </button>
+        <button onclick="shareContent()" class="flex flex-col items-center active:scale-75 transition text-blue-400">
+            <i class="fas fa-retweet text-2xl"></i>
+            <span class="text-[9px] font-bold mt-0.5 text-white">10%</span>
+        </button>
+        <button class="flex flex-col items-center active:scale-75 transition" onclick="toggleComments()">
+            <i class="fas fa-comment-dots text-2xl text-white"></i>
+            <span id="comment-count" class="text-[9px] font-bold mt-0.5">342</span>
+        </button>
+        <!-- EAT: $0.02 — 30% creator / 70% platform -->
+        <div class="flex flex-col items-center">
+            <button onclick="voraxBite()" class="w-9 h-9 rounded-full bg-red-600 border border-red-400 flex flex-col items-center justify-center active:scale-90 transition shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+                <i class="fas fa-skull-crossbones text-white text-base"></i>
+                <span class="text-[7px] font-black text-white uppercase mt-0.5">Eat</span>
+            </button>
+            <span class="text-[8px] font-black text-white mt-1">$0.02</span>
+        </div>
+        <!-- REPORT: $0.09 — 100% Limbo Fund -->
+        <div class="flex flex-col items-center">
+            <button onclick="window.toggleReport()" class="w-9 h-9 bg-white rounded-full flex items-center justify-center active:scale-90 transition border-2 border-red-600">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xs"></i>
+            </button>
+            <span class="text-[8px] font-black text-white mt-1">$0.09</span>
+        </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="absolute bottom-0 left-0 w-full p-4 pb-8 z-50 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none">
+        <!-- BOOST: $0.29 — 70% creator / 15% platform / 15% justice -->
+        <div class="flex flex-col items-center w-fit pointer-events-auto mb-3">
+            <button id="btn-boost" onclick="fanBoost()" class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 active:scale-90 transition-all shadow-lg">
+                <i class="fas fa-bolt text-yellow-400 text-2xl"></i>
+            </button>
+            <div class="text-[9px] font-black text-white mt-1 text-center">$0.29</div>
+        </div>
+        <h3 id="creator-name" class="font-bold text-base text-white pointer-events-auto">@CyberShark_Official</h3>
+        <p class="text-xs text-gray-300">Integrity: <span id="hp-display" class="text-blue-500 font-mono font-bold">90000</span> HP</p>
+        <div class="w-full h-1 bg-zinc-800 rounded-full mt-1 mb-2 overflow-hidden">
+            <div id="hp-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width:100%"></div>
+        </div>
+        <div class="flex items-center gap-2 mt-2 opacity-70 w-2/3 pointer-events-auto" onclick="toggleMute()">
+            <i id="audio-icon" class="fas fa-volume-up text-sm"></i>
+            <div class="marquee-container text-[9px] font-mono text-blue-400 uppercase tracking-tighter">
+                <span class="marquee-text">SHRK Protocol • Boost $0.29: 70% Creator 15% Platform 15% Justice • Eat $0.02: 30% Creator 70% Platform • Report $0.09: 100% Limbo Fund • Revive $2.99: 100% Platform in $SHRK • </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMENTS DRAWER -->
+    <div id="comment-drawer" class="fixed bottom-0 left-0 w-full h-[60%] bg-zinc-950 rounded-t-3xl z-[150] transition-transform duration-300 translate-y-full flex flex-col border-t border-white/10">
+        <div class="w-full flex justify-center py-3 cursor-pointer" onclick="toggleComments()"><div class="w-12 h-1 bg-zinc-700 rounded-full"></div></div>
+        <div class="px-6 pb-2 flex justify-between items-center">
+            <h3 class="font-bold uppercase text-sm tracking-widest">Comments</h3>
+            <button onclick="toggleComments()" class="p-2 text-2xl">&times;</button>
+        </div>
+        <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center"><i class="fas fa-anchor text-white text-xs"></i></div><div><p class="text-xs font-bold text-blue-400">@CryptoWhale</p><p class="text-sm text-gray-200">L'ancora tiene! Hold the line! ⚓🚀</p></div></div>
+            <div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center"><i class="fas fa-fish text-white text-xs"></i></div><div><p class="text-xs font-bold text-red-400">@Predator_99</p><p class="text-sm text-gray-200">Appena morso! -200 HP 🔥🦈</p></div></div>
+        </div>
+        <div class="p-4 border-t border-zinc-800 bg-black flex gap-2 items-center pb-8">
+            <input type="text" id="comment-input" placeholder="Add a comment..." class="flex-1 bg-zinc-900 rounded-full px-4 py-3 text-sm text-white outline-none">
+            <button onclick="postComment()" class="text-blue-500 font-bold px-4">Post</button>
+        </div>
+    </div>
+
+    <!-- DEV MENU -->
+    <div id="dev-menu" class="fixed inset-0 bg-zinc-950 z-[200] hidden flex-col p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
+            <div><h2 class="text-xl font-black text-blue-600 tracking-tighter">VORAX PROTOCOL</h2><p class="text-[8px] text-zinc-500 font-mono">CORE SETTINGS V1.1</p></div>
+            <button onclick="toggleDevMenu()" class="w-12 h-12 flex items-center justify-center bg-zinc-900 rounded-full text-2xl">&times;</button>
+        </div>
+        <!-- UPLOAD -->
+        <div class="mb-6 p-5 border border-blue-500/30 rounded-2xl bg-blue-900/10">
+            <h3 class="text-[10px] font-black mb-4 text-blue-400 tracking-[0.2em] uppercase">Creator Dashboard</h3>
+            <div class="space-y-4">
+                <div class="relative w-full h-24 border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center bg-black hover:border-blue-500 transition cursor-pointer">
+                    <input type="file" id="new-video-file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <i class="fas fa-cloud-upload-alt text-xl text-zinc-600 mb-1"></i>
+                    <span id="file-label" class="text-[8px] text-zinc-500 font-bold uppercase">Upload Video</span>
+                </div>
+                <input type="text" id="new-video-creator" placeholder="@Username" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
+                <input type="text" id="new-video-ca" placeholder="Solana Creator Wallet" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
+                <p class="text-[9px] text-zinc-500 text-center uppercase">Fee: $0.01 (<span id="upload-sol-cost" class="text-blue-400">--</span> SOL) → 100% Platform</p>
+                <button onclick="publishRealContent()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase text-xs tracking-widest">Publish</button>
+            </div>
+        </div>
+        <!-- JUSTICE FUND -->
+        <div class="mb-4 p-5 border border-white/10 rounded-2xl bg-zinc-900/30">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center"><i class="fas fa-shield-alt text-zinc-900 text-lg"></i></div>
+                <div><h4 class="text-[10px] font-black text-white uppercase tracking-widest">Vorax Foundation</h4><p class="text-[10px] text-zinc-400">Justice + Boost Fund</p></div>
+            </div>
+            <div class="text-2xl font-mono font-bold text-white"><span id="foundation-total-display">0.0000</span> <span class="text-[10px] text-blue-400">SOL</span></div>
+            <p class="text-[8px] text-zinc-600 mt-1">Report: 100% Limbo per-video • Boost: 15% Justice share</p>
+        </div>
+        <!-- TREASURE -->
+        <div class="mb-10 p-5 border border-blue-500/20 rounded-2xl bg-gradient-to-br from-zinc-900 to-black">
+            <h4 class="text-[10px] font-black text-blue-400 uppercase mb-2">Creator Treasure</h4>
+            <div class="text-3xl font-black text-white tracking-tighter mb-1" id="creator-shrk-display">0.00000</div>
+            <p class="text-[9px] text-emerald-500 font-bold uppercase mb-3">SOL Accumulated</p>
+            <div class="text-[8px] text-zinc-600 space-y-1 mb-4">
+                <div class="flex justify-between"><span>From Boost (70%)</span><span id="treasure-boost" class="text-emerald-400">0.00000 SOL</span></div>
+                <div class="flex justify-between"><span>From Eat (30%)</span><span id="treasure-eat" class="text-red-400">0.00000 SOL</span></div>
+            </div>
+            <button id="claim-btn-treasure" onclick="claimCreatorFunds()" disabled class="w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5">Claim Locked</button>
+            <p id="claim-timer-display" class="text-center text-[8px] text-zinc-600 mt-3 uppercase font-mono">Analyzing...</p>
+        </div>
+    </div>
+
+    <!-- UPLOAD CONFIRM -->
+    <div id="upload-confirm-overlay" class="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-md hidden p-6">
+        <div class="w-full max-w-xs bg-zinc-950 border-2 border-blue-600 rounded-3xl p-6 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -left-10 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10">
+                <i class="fas fa-cloud-upload-alt text-blue-600 text-5xl animate-pulse mb-4 block"></i>
+                <h2 class="text-xl font-black text-white mb-4 uppercase">Publish to Zone</h2>
+                <div class="bg-blue-600/5 rounded-2xl p-4 mb-6 border border-blue-600/20 text-left space-y-2">
+                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400 uppercase">Platform Fee</span><span class="text-white font-bold">$0.01 → 100% Platform</span></div>
+                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400 uppercase">Storage</span><span class="text-emerald-400 font-bold">Irys/Arweave</span></div>
+                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400 uppercase">DNA Hash</span><span id="confirm-dna-hash" class="text-blue-400 font-mono font-bold">--</span></div>
+                </div>
+                <button id="btn-confirm-upload" class="w-full py-4 bg-blue-600 rounded-xl text-xs font-black text-white uppercase tracking-[0.2em] active:scale-95 transition mb-2">Proceed</button>
+                <button onclick="document.getElementById('upload-confirm-overlay').classList.add('hidden')" class="w-full py-3 text-[10px] font-bold text-zinc-600 uppercase">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EAT CONFIRM: 30% creator / 70% platform -->
+    <div id="eat-confirm-overlay" class="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-md hidden p-6">
+        <div class="w-full max-w-xs bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -left-10 w-32 h-32 bg-red-600/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10">
+                <i class="fas fa-skull text-red-600 text-5xl animate-pulse mb-4 block"></i>
+                <h2 class="text-2xl font-black text-white mb-1 uppercase">Ready to Bite?</h2>
+                <p class="text-zinc-500 text-[9px] mb-4 uppercase font-mono">Target: <span class="text-red-500 font-bold">-200 HP</span></p>
+                <div class="bg-red-600/5 rounded-2xl p-4 mb-6 border border-red-600/20 text-left space-y-2">
+                    <p class="text-[8px] text-zinc-500 uppercase text-center mb-2">Cost $0.02 split</p>
+                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400">Creator</span><span class="text-white font-bold">30%</span></div>
+                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400">Platform</span><span class="text-white font-bold">70%</span></div>
+                </div>
+                <button onclick="confirmPredatorEat()" class="w-full py-4 bg-red-600 rounded-xl text-xs font-black text-white uppercase tracking-[0.2em] active:scale-95 transition mb-2">Chomp!</button>
+                <button onclick="hideEatModal()" class="w-full py-3 text-[10px] font-bold text-zinc-600 uppercase">Aborting Mission</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT SHEET: 100% Limbo Fund -->
+    <div id="report-sheet-overlay" class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm hidden flex items-end justify-center" style="display:none;">
+        <div class="bg-zinc-900 w-full max-w-md rounded-t-[32px] p-6 border-t border-red-600/30 animate-slide-up">
+            <div class="w-12 h-1.5 bg-zinc-700 rounded-full mx-auto mb-6"></div>
+            <h3 class="text-xl font-black text-white italic uppercase tracking-tighter mb-1">Initiate Judgment</h3>
+            <p class="text-xs text-zinc-500 mb-1">Cost: <span class="text-white font-bold">$0.09</span> <span id="report-sol-price" class="text-red-500 font-bold ml-1"></span></p>
+            <p class="text-[9px] text-zinc-600 mb-5 uppercase tracking-wide">100% → Limbo Fund • Rimborso + premio se video abbattuto (>75% segnalazioni)</p>
+            <div class="grid grid-cols-2 gap-3 mb-8">
+                <button onclick="selectCategory('copyright',this)" class="report-cat-btn border border-zinc-800 bg-zinc-800/50 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition"><span class="text-xl">🚫</span><span class="text-[10px] font-bold text-zinc-400 uppercase">Copyright</span></button>
+                <button onclick="selectCategory('explicit',this)" class="report-cat-btn border border-zinc-800 bg-zinc-800/50 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition"><span class="text-xl">🔞</span><span class="text-[10px] font-bold text-zinc-400 uppercase">Explicit</span></button>
+                <button onclick="selectCategory('scam',this)" class="report-cat-btn border border-zinc-800 bg-zinc-800/50 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition"><span class="text-xl">⚠️</span><span class="text-[10px] font-bold text-zinc-400 uppercase">Scam</span></button>
+                <button onclick="selectCategory('quality',this)" class="report-cat-btn border border-zinc-800 bg-zinc-800/50 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition"><span class="text-xl">📉</span><span class="text-[10px] font-bold text-zinc-400 uppercase">Low Quality</span></button>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="hideReportSheet()" class="flex-1 py-4 rounded-2xl font-black text-zinc-500 uppercase text-xs">Cancel</button>
+                <button id="btn-confirm-report" onclick="confirmReportAttack()" disabled class="flex-[2] bg-zinc-700 py-4 rounded-2xl font-black text-white/30 uppercase text-xs cursor-not-allowed">Select Category</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+// ==============================================
+// SUPABASE — ⚠️ SOSTITUISCI CON LE TUE CHIAVI
+// ==============================================
+const SUPABASE_URL    = 'https://ctednkfscujsyuhnxggj.supabase.co';
+const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0ZWRua2ZzY3Vqc3l1aG54Z2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTgzNzgsImV4cCI6MjA4ODc5NDM3OH0.HyR1oxSEvLLNpxP4ybjwjNrvcg91LmQhnEs2c6QgtbI';
+const { createClient } = window.supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ==============================================
+// CONFIGURAZIONE GLOBALE
+// ==============================================
+const SHRK_MINT      = 'AMwhZQdgyRHpqYD7rA5z1quMNhHdYQhrwVAXpqB3tcBs';
+const PLATFORM_WALLET = '7j7KEbQ9Qm9rZJGN8hD3TGowZmta8eFwmZEBVmpqvnoD';
+const JUSTICE_WALLET  = 'ChL2ki6M2rdbUUhGtZ2frNhuPyNcTTcnK6WA33whFHEd';
+const RPC_URL         = 'https://solana-rpc.publicnode.com';
+const SHRK_GATE       = 5000;
+const MAX_HP          = 90000;
+const DECAY_PER_SEC   = 10000 / 86400;
+const REPORT_THRESHOLD = 0.75;
+
+// Prezzi (aggiornati dall'oracle)
+window.solPriceUSD      = 150;
+window.currentShrkPrice = 0.005;
+
+// ==============================================
+// SPL TOKEN ENGINE
+// ==============================================
+const TOKEN_PROGRAM_ID            = new window.solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ASSOCIATED_TOKEN_PROGRAM_ID = new window.solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+window.splToken = {
+    getAssociatedTokenAddress: async (mint, owner) => {
+        const [addr] = await window.solanaWeb3.PublicKey.findProgramAddress(
+            [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+            ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        return addr;
+    },
+    createAssociatedTokenAccountInstruction: (payer, ata, owner, mint) =>
+        new window.solanaWeb3.TransactionInstruction({
+            keys: [
+                {pubkey:payer,isSigner:true,isWritable:true},
+                {pubkey:ata,isSigner:false,isWritable:true},
+                {pubkey:owner,isSigner:false,isWritable:false},
+                {pubkey:mint,isSigner:false,isWritable:false},
+                {pubkey:window.solanaWeb3.SystemProgram.programId,isSigner:false,isWritable:false},
+                {pubkey:TOKEN_PROGRAM_ID,isSigner:false,isWritable:false},
+                {pubkey:window.solanaWeb3.SYSVAR_RENT_PUBKEY,isSigner:false,isWritable:false},
+            ],
+            programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+            data: new Uint8Array(0),
+        }),
+    createTransferInstruction: (src, dst, owner, amount) => {
+        const data = new Uint8Array(9); data[0] = 3;
+        let a = BigInt(amount);
+        for(let i=0;i<8;i++){data[1+i]=Number(a&0xffn);a>>=8n;}
+        return new window.solanaWeb3.TransactionInstruction({
+            keys:[{pubkey:src,isSigner:false,isWritable:true},{pubkey:dst,isSigner:false,isWritable:true},{pubkey:owner,isSigner:true,isWritable:false}],
+            programId:TOKEN_PROGRAM_ID, data
+        });
+    }
+};
+
+// ==============================================
+// FEED — caricato da Supabase
+// ==============================================
+let feedData = [];           // popolato da loadFeed()
+let currentFeedIndex = 0;
+let currentHP  = MAX_HP;
+let isPaused   = false;
+let isBanned   = false;
+let isSwiping  = false;
+
+const currentVideo  = () => feedData[currentFeedIndex] || {};
+const creatorWallet = () => currentVideo().ca || PLATFORM_WALLET;
+
+// Carica il feed da Supabase ordinato per HP decrescente
+window.loadFeed = async () => {
+    try {
+        const { data, error } = await db
+            .from('videos')
+            .select('*')
+            .eq('is_banned', false)
+            .order('hp', { ascending: false })
+            .limit(50);
+        if(error) throw error;
+        if(data && data.length > 0) {
+            feedData = data.map(v => ({
+                id:      v.id,
+                creator: v.creator,
+                ca:      v.creator_wallet,
+                src:     v.src,
+                dna:     v.dna_hash,
+                hp:      v.hp,
+            }));
+            console.log('Feed caricato: '+feedData.length+' video');
+            // Imposta HP del primo video
+            currentHP = feedData[0].hp || MAX_HP;
+        }
+    } catch(e) {
+        console.warn('Supabase offline, uso feed locale di fallback:', e);
+        feedData = [
+            {id:'video_1',creator:'@CyberShark_Official',ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://vjs.zencdn.net/v/oceans.mp4',dna:null,hp:90000},
+            {id:'video_2',creator:'@Crypto_Bunny',       ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://www.w3schools.com/html/mov_bbb.mp4',dna:null,hp:90000},
+            {id:'video_3',creator:'@Sintel_Web3',         ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://media.w3.org/2010/05/sintel/trailer.mp4',dna:null,hp:90000},
+            {id:'video_4',creator:'@Bear_Market_Surv',    ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://media.w3.org/2010/05/video/movie_300.mp4',dna:null,hp:90000},
+        ];
+        currentHP = feedData[0].hp;
+    }
+};
+
+// Salva HP su Supabase (con fallback localStorage)
+window.saveHP = async (videoId, hp) => {
+    try {
+        await db.from('videos').update({ hp, last_tick: new Date().toISOString() }).eq('id', videoId);
+    } catch(e) {
+        localStorage.setItem('hp_'+videoId, hp); // fallback
+    }
+};
+
+// Registra un'interazione su Supabase
+window.saveInteraction = async (videoId, wallet, action, txSignature='', lamports=0, category=null) => {
+    try {
+        await db.from('interactions').upsert({
+            video_id: videoId,
+            wallet,
+            action,
+            category,
+            tx_signature: txSignature,
+            lamports,
+        }, { onConflict: 'video_id,wallet,action', ignoreDuplicates: false });
+    } catch(e) {
+        console.warn('saveInteraction fallback localStorage:', e);
+        localStorage.setItem(action+'_'+wallet+'_'+videoId, 'true');
+    }
+};
+
+// Controlla se un wallet ha già fatto un'azione su un video
+window.hasInteracted = async (videoId, wallet, action) => {
+    try {
+        const { data } = await db.from('interactions')
+            .select('id').eq('video_id', videoId).eq('wallet', wallet).eq('action', action).limit(1);
+        return data && data.length > 0;
+    } catch(e) {
+        return localStorage.getItem(action+'_'+wallet+'_'+videoId) === 'true';
+    }
+};
+
+// ==============================================
+// AUDIO
+// ==============================================
+window.audioBite  = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_5e25679543.mp3');
+window.audioBoost = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_bb64303494.mp3');
+[window.audioBite,window.audioBoost].forEach(a=>{a.volume=0.5;a.preload='auto';});
+const unlockAudio = () => {
+    [window.audioBite,window.audioBoost].forEach(a=>{a.play().then(()=>{a.pause();a.currentTime=0;}).catch(()=>{});});
+    document.removeEventListener('click',unlockAudio);
+    document.removeEventListener('touchstart',unlockAudio);
+};
+document.addEventListener('click',unlockAudio);
+document.addEventListener('touchstart',unlockAudio);
+
+// ==============================================
+// TOAST
+// ==============================================
+window.showToast = (msg, isError=false) => {
+    const t = document.getElementById('toast');
+    if(!t) return;
+    if(window._toastTimer) clearTimeout(window._toastTimer);
+    t.innerText = msg;
+    t.style.backgroundColor = isError ? '#dc2626' : '#2563eb';
+    t.style.boxShadow = isError ? '0 0 20px rgba(220,38,38,0.5)' : '0 0 20px rgba(37,99,235,0.5)';
+    t.classList.remove('opacity-0');
+    window._toastTimer = setTimeout(()=>t.classList.add('opacity-0'),4000);
+};
+
+// ==============================================
+// ORACLE — FIX: priceUsd = SHRK price, NON SOL price
+// ==============================================
+window.updateOraclePrice = async () => {
+    try {
+        const res  = await fetch('https://api.dexscreener.com/latest/dex/pairs/solana/8p6p2id8t8yh6f7ujmpxxqy2wz3zndkuhz1zsqzvp4aq');
+        const data = await res.json();
+        if(data.pairs?.[0]) {
+            const pair = data.pairs[0];
+            window.currentShrkPrice = parseFloat(pair.priceUsd) || 0.005;  // prezzo SHRK in USD
+            if(pair.priceNative && parseFloat(pair.priceNative) > 0) {
+                // priceNative = SHRK/SOL, quindi SOL = SHRK_USD / SHRK_SOL
+                window.solPriceUSD = window.currentShrkPrice / parseFloat(pair.priceNative);
+            }
+            console.log('Oracle: SHRK=$'+window.currentShrkPrice.toFixed(6)+' SOL=$'+window.solPriceUSD.toFixed(2));
+            updatePriceLabels();
+        }
+    } catch(e) { console.warn('Oracle offline, fallback prices'); }
+};
+setInterval(window.updateOraclePrice, 30000); // un solo interval a 30s
+
+const usdToLamports = usd => Math.floor((usd/window.solPriceUSD)*window.solanaWeb3.LAMPORTS_PER_SOL);
+
+function updatePriceLabels() {
+    const u = document.getElementById('upload-sol-cost');
+    if(u) u.innerText = (0.01/window.solPriceUSD).toFixed(5);
+    const r = document.getElementById('report-sol-price');
+    if(r) r.innerText = '≈'+(0.09/window.solPriceUSD).toFixed(5)+' SOL';
+    updateReviveCost();
+}
+function updateReviveCost() {
+    const el = document.getElementById('revive-shrk-cost');
+    if(el) el.innerText = '≈'+Math.ceil(2.99/window.currentShrkPrice).toLocaleString()+' $SHRK';
+}
+
+// ==============================================
+// SHRK GATE: verifica >= 5000 SHRK
+// ==============================================
+window.checkShrkGate = async (provider) => {
+    if(!provider?.publicKey) { showToast('CONNECT WALLET FIRST! 🔌',true); return false; }
+    try {
+        showToast('VERIFYING $SHRK... 🔍');
+        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const mint = new window.solanaWeb3.PublicKey(SHRK_MINT);
+        const ata  = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
+        const bal  = await conn.getTokenAccountBalance(ata);
+        const amt  = bal.value.uiAmount || 0;
+        if(amt >= SHRK_GATE) return true;
+        showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
+        return false;
+    } catch(e) { showToast('ACCESS DENIED: 0 / '+SHRK_GATE+' $SHRK 🦈',true); return false; }
+};
+
+// ==============================================
+// HELPER: build split SOL transaction
+// ==============================================
+async function buildSplitTx(provider, conn, splits) {
+    const tx = new window.solanaWeb3.Transaction();
+    splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:s.to,lamports:s.lamports})); });
+    const {blockhash} = await conn.getLatestBlockhash();
+    tx.recentBlockhash = blockhash;
+    tx.feePayer = provider.publicKey;
+    return tx;
+}
+
+// ==============================================
+// BOOST — $0.29 → 70% creator / 15% platform / 15% justice
+// ==============================================
+window.fanBoost = async () => {
+    if(isBanned) return showToast('CONTENT BANNED',true);
+    const provider = window.solana || window.phantom?.solana;
+    if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌',true);
+    if(!await window.checkShrkGate(provider)) return;
+
+    const btn = document.getElementById('btn-boost');
+    try {
+        if(btn){btn.disabled=true;btn.classList.add('animate-pulse');}
+        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const total = usdToLamports(0.29);
+        const toCreator  = Math.floor(total*0.70);
+        const toPlatform = Math.floor(total*0.15);
+        const toJustice  = total - toCreator - toPlatform;
+
+        showToast('BOOSTING: '+(0.29/window.solPriceUSD).toFixed(5)+' SOL (70/15/15) 🚀');
+        const tx = await buildSplitTx(provider, conn, [
+            {to:new window.solanaWeb3.PublicKey(creatorWallet()), lamports:toCreator},
+            {to:new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports:toPlatform},
+            {to:new window.solanaWeb3.PublicKey(JUSTICE_WALLET),  lamports:toJustice},
+        ]);
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+
+        currentHP += 10000;
+        await window.saveHP(currentVideo().id, currentHP);
+        await window.saveInteraction(currentVideo().id, provider.publicKey.toString(), 'boost', signature, toCreator);
+
+        updateVisuals();
+        showToast('BOOST! +10,000 HP ⚡ Creator earned '+(toCreator/window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(5)+' SOL');
+        if(window.audioBoost) window.audioBoost.play();
+    } catch(e) {
+        showToast(e.message?.includes('User rejected')?'BOOST CANCELED':'ERROR: Check SOL balance',true);
+    } finally {
+        if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');}
+    }
+};
+
+// ==============================================
+// EAT — $0.02 → 30% creator / 70% platform
+// ==============================================
+window.voraxBite = async () => {
+    const provider = window.solana || window.phantom?.solana;
+    if(!await window.checkShrkGate(provider)) return;
+    const vid  = currentVideo().id;
+    const addr = provider.publicKey.toString();
+    const already = await window.hasInteracted(vid, addr, 'eat');
+    if(already) return showToast('ONLY 1 BITE PER VIDEO 🦈',true);
+    document.getElementById('eat-confirm-overlay').classList.remove('hidden');
+};
+window.hideEatModal = () => document.getElementById('eat-confirm-overlay').classList.add('hidden');
+
+window.confirmPredatorEat = async () => {
+    const video   = document.getElementById('main-video');
+    const vid     = currentVideo().id;
+    document.getElementById('eat-confirm-overlay').classList.add('hidden');
+    try {
+        const provider = window.solana || window.phantom?.solana;
+        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const total      = usdToLamports(0.02);
+        const toCreator  = Math.floor(total*0.30);
+        const toPlatform = total - toCreator;
+
+        showToast('CHOMP: '+(0.02/window.solPriceUSD).toFixed(5)+' SOL (30/70) 🩸');
+        const tx = await buildSplitTx(provider, conn, [
+            {to:new window.solanaWeb3.PublicKey(creatorWallet()), lamports:toCreator},
+            {to:new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports:toPlatform},
+        ]);
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+
+        if(window.audioBite) window.audioBite.play();
+        currentHP = Math.max(0, currentHP-200);
+        await window.saveHP(vid, currentHP);
+        await window.saveInteraction(vid, provider.publicKey.toString(), 'eat', signature, toCreator);
+
+        showToast('SIGNAL ATTACKED! -200 HP 🩸',true);
+        const flash = document.createElement('div');
+        flash.className='fixed inset-0 z-[9999] pointer-events-none bg-red-600/60 transition-opacity duration-500';
+        document.body.appendChild(flash);
+        if(video) video.classList.add('bite-effect');
+        setTimeout(()=>{flash.style.opacity='0';if(video)video.classList.remove('bite-effect');setTimeout(()=>flash.remove(),500);},300);
+
+        updateVisuals();
+        checkVideoKill(vid);
+    } catch(e) {
+        showToast(e.message?.includes('User rejected')?'ATTACK ABORTED':'ERROR: Check SOL balance',true);
+    }
+};
+
+// ==============================================
+// REPORT — $0.09 → 100% Justice Wallet (Limbo)
+// ==============================================
+window.toggleReport = async () => {
+    const provider = window.solana || window.phantom?.solana;
+    if(!await window.checkShrkGate(provider)) return;
+    const el = document.getElementById('report-sheet-overlay');
+    if(el){el.classList.remove('hidden');el.style.display='flex';}
+};
+window.hideReportSheet = () => {
+    const el = document.getElementById('report-sheet-overlay');
+    if(el){el.style.display='none';el.classList.add('hidden');}
+};
+window.selectedReportCategory = null;
+window.selectCategory = (cat, el) => {
+    window.selectedReportCategory = cat;
+    document.querySelectorAll('.report-cat-btn').forEach(b=>b.classList.remove('border-red-600','bg-red-600/10'));
+    el.classList.add('border-red-600','bg-red-600/10');
+    const btn = document.getElementById('btn-confirm-report');
+    if(btn){btn.disabled=false;btn.classList.remove('bg-zinc-700','text-white/30','cursor-not-allowed');btn.classList.add('bg-red-600','text-white');btn.innerText='CONFIRM JUDGMENT';}
+};
+window.confirmReportAttack = async () => {
+    if(!window.selectedReportCategory) return;
+    const provider   = window.solana || window.phantom?.solana;
+    const vid        = currentVideo().id;
+    const userWallet = provider?.publicKey?.toString() || 'anon';
+    window.hideReportSheet();
+    try {
+        const conn  = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const total = usdToLamports(0.09);
+        showToast('JUDGMENT: '+(0.09/window.solPriceUSD).toFixed(5)+' SOL → Limbo ⚖️');
+        const tx = await buildSplitTx(provider, conn, [{to:new window.solanaWeb3.PublicKey(JUSTICE_WALLET),lamports:total}]);
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+
+        await window.saveInteraction(vid, userWallet, 'report', signature, total, window.selectedReportCategory);
+
+        // Aggiorna limbo fund per questo video
+        const solAmount = total/window.solanaWeb3.LAMPORTS_PER_SOL;
+        await db.from('limbo_fund').upsert({
+            video_id: vid,
+            total_sol: solAmount,
+            reporter_count: 1,
+        }, { onConflict: 'video_id' });
+        // Incrementa se esiste già (Supabase non supporta increment diretto senza RPC, usiamo una re-lettura)
+        try {
+            const {data:lf} = await db.from('limbo_fund').select('total_sol,reporter_count').eq('video_id',vid).single();
+            if(lf) await db.from('limbo_fund').update({total_sol: (lf.total_sol||0)+solAmount, reporter_count: (lf.reporter_count||0)+1}).eq('video_id',vid);
+        } catch(e){}
+
+        currentHP = Math.max(0, currentHP-400);
+        await window.saveHP(vid, currentHP);
+        showToast('CONDEMNED! -400 HP 🛑',true);
+
+        const flash = document.createElement('div');
+        flash.className='fixed inset-0 z-[9999] pointer-events-none bg-zinc-200/60 transition-opacity duration-500';
+        document.body.appendChild(flash);
+        setTimeout(()=>{flash.style.opacity='0';setTimeout(()=>flash.remove(),500);},300);
+
+        updateVisuals();
+        updateJusticeDisplay();
+        checkVideoKill(vid);
+    } catch(e) {
+        showToast(e.message?.includes('User rejected')?'REPORT ABORTED':'ERROR: Check SOL balance',true);
+    }
+};
+
+// ==============================================
+// JUSTICE SYSTEM: abbattimento video al 75%
+// ==============================================
+async function checkVideoKill(vid) {
+    try {
+        const {data:counts} = await db.from('interactions')
+            .select('action')
+            .eq('video_id', vid);
+        if(!counts||counts.length===0) return;
+        const total   = counts.length;
+        const reports = counts.filter(r=>r.action==='report').length;
+        if(reports/total >= REPORT_THRESHOLD) {
+            isBanned = true; currentHP = 0;
+            await db.from('videos').update({is_banned:true, hp:0}).eq('id', vid);
+            const {data:lf} = await db.from('limbo_fund').select('total_sol,reporter_count').eq('video_id',vid).single();
+            const limboSol = lf?.total_sol||0;
+            const repCount = lf?.reporter_count||reports;
+            showToast('VIDEO CONDEMNED ⚖️ — '+(limboSol).toFixed(4)+' SOL → '+repCount+' reporters 🏆',true);
+            console.log('JUSTICE: '+(limboSol/repCount).toFixed(5)+' SOL per segnalatore. Distribuzione on-chain TODO.');
+            updateVisuals();
+        }
+    } catch(e){ console.warn('checkVideoKill error:', e); }
+}
+
+// ==============================================
+// REVIVE — $2.99 in $SHRK → 100% platform
+// ==============================================
+window.reviveVideo = async () => {
+    const provider = window.solana || window.phantom?.solana;
+    if(!provider) return showToast('INSTALL PHANTOM! 🛑',true);
+    if(!provider.publicKey) {
+        try { await provider.connect(); showToast('CONNECTED! CLICK REVIVE AGAIN 🦈'); return; }
+        catch { return showToast('CONNECTION REJECTED ❌',true); }
+    }
+    const btn = document.getElementById('btn-revive-video');
+    const orig = btn.innerHTML;
+    btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin text-4xl"></i>';
+    try {
+        const conn     = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const mint     = new window.solanaWeb3.PublicKey(SHRK_MINT);  // FIX: usa SHRK_MINT corretto
+        const destWallet = new window.solanaWeb3.PublicKey(PLATFORM_WALLET);
+        const required = Math.ceil(2.99/window.currentShrkPrice);
+        const amount   = BigInt(required)*BigInt(1000000); // 6 decimali
+
+        showToast('PREPARAZIONE: '+required.toLocaleString()+' $SHRK...');
+        const userATA = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
+        const destATA = await window.splToken.getAssociatedTokenAddress(mint, destWallet);
+
+        const tx = new window.solanaWeb3.Transaction();
+        const destInfo = await conn.getAccountInfo(destATA);
+        if(!destInfo) tx.add(window.splToken.createAssociatedTokenAccountInstruction(provider.publicKey,destATA,destWallet,mint));
+        tx.add(window.splToken.createTransferInstruction(userATA,destATA,provider.publicKey,amount));
+
+        const {blockhash} = await conn.getLatestBlockhash('confirmed');
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
+
+        showToast('FIRMA SU PHANTOM... ✍️');
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+
+        currentHP = MAX_HP; isBanned = false;
+        localStorage.setItem('hp_'+currentVideo().id, currentHP);
+        updateVisuals();
+        document.getElementById('signal-lost-overlay').classList.add('hidden');
+        const v = document.getElementById('main-video');
+        if(v) v.play();
+        showToast('SIGNAL REVIVED! +90,000 HP ⚡🦈');
+    } catch(e) {
+        showToast(e.message?.includes('User rejected')?'CANCELED 🦈':'ERROR: '+e.message,true);
+    } finally { btn.disabled=false; btn.innerHTML=orig; }
+};
+
+// ==============================================
+// LIKE (gratis)
+// ==============================================
+window.giveLike = async () => {
+    const vid  = currentVideo().id;
+    const addr = window.solana?.publicKey?.toString()||'anon';
+    const already = await window.hasInteracted(vid, addr, 'like');
+    if(already) return showToast("Hai già calato l'ancora! ⚓💙");
+    const icon = document.getElementById('like-icon');
+    if(icon){icon.className='fas fa-anchor text-2xl text-blue-500';icon.style.textShadow='0 0 15px rgba(59,130,246,0.8)';}
+    currentHP += 10;
+    await window.saveHP(vid, currentHP);
+    await window.saveInteraction(vid, addr, 'like');
+    updateVisuals();
+    showToast('Segnale Apprezzato! +10 HP ⚓💙');
+};
+
+// ==============================================
+// REPOST (10% future interactions)
+// ==============================================
+window.shareContent = async () => {
+    const vid  = currentVideo().id;
+    const addr = window.solana?.publicKey?.toString()||'anon';
+    try {
+        await db.from('reposts').upsert({
+            video_id: vid,
+            reposter_wallet: addr,
+            original_creator_wallet: creatorWallet(),
+        }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
+    } catch(e) { console.warn('Repost fallback:', e); }
+    showToast('REPOSTED! 🔁 Guadagnerai 10% dalle interazioni sul tuo repost 🦈');
+};
+
+// ==============================================
+// UPLOAD + DNA ANTI-PIRACY
+// ==============================================
+window.generateVideoHash = async (file) => {
+    try {
+        const buf = await file.slice(0,100000).arrayBuffer();
+        const h   = await crypto.subtle.digest('SHA-256',buf);
+        return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    } catch { return 'dna_'+file.size+'_'+Date.now(); }
+};
+
+document.getElementById('new-video-file')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    const lbl = document.getElementById('file-label');
+    if(lbl){lbl.innerText='DNA: ANALYZING... 🧬';lbl.style.color='#3b82f6';}
+    try {
+        const hash = await window.generateVideoHash(file);
+        window.pendingVideoHash = hash;
+        // Controlla duplicati DNA su Supabase
+        let allDNA = [];
+        try {
+            const {data} = await db.from('videos').select('dna_hash,creator').not('dna_hash','is',null);
+            allDNA = data || [];
+        } catch(e) {
+            allDNA = JSON.parse(localStorage.getItem('all_dna')||'[]');
+        }
+        const dup = allDNA.find(d=>(d.dna_hash||d.hash)===hash);
+        if(dup) {
+            showToast('⚠️ DNA MATCH: già caricato da '+dup.creator,true);
+            if(lbl){lbl.innerText='DNA DUPLICATE ❌';lbl.style.color='#ef4444';}
+        } else {
+            if(lbl){lbl.innerText='DNA OK: '+file.name.substring(0,15)+'... ✅';lbl.style.color='#10b981';}
+            const el = document.getElementById('confirm-dna-hash');
+            if(el) el.innerText=hash.substring(0,12)+'...';
+        }
+    } catch { if(lbl){lbl.innerText='DNA ERROR ❌';lbl.style.color='#ef4444';} }
+});
+
+window.publishRealContent = () => {
+    const file    = document.getElementById('new-video-file')?.files[0];
+    const creator = document.getElementById('new-video-creator').value;
+    const ca      = document.getElementById('new-video-ca').value;
+    if(!file||!creator||!ca) return showToast('Compila tutti i campi! ⚠️',true);
+    const provider = window.solana||window.phantom?.solana;
+    if(!provider?.publicKey) return showToast('Connetti il Wallet! ⚠️',true);
+    document.getElementById('upload-confirm-overlay').classList.remove('hidden');
+};
+
+window.executeUploadProtocol = async () => {
+    document.getElementById('upload-confirm-overlay').classList.add('hidden');
+    const file    = document.getElementById('new-video-file')?.files[0];
+    const creator = document.getElementById('new-video-creator').value;
+    const ca      = document.getElementById('new-video-ca').value;
+    const provider = window.solana||window.phantom?.solana;
+    try {
+        showToast('PREPARAZIONE... ⏳');
+        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const feeLamports = usdToLamports(0.01);
+        const feeTx = new window.solanaWeb3.Transaction().add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(PLATFORM_WALLET),lamports:feeLamports}));
+        const {blockhash} = await conn.getLatestBlockhash();
+        feeTx.recentBlockhash=blockhash; feeTx.feePayer=provider.publicKey;
+        showToast('FEE $0.01 → Platform... 🦈');
+        const {signature} = await provider.signAndSendTransaction(feeTx);
+        await conn.confirmTransaction(signature,'confirmed');
+
+        showToast('UPLOAD SU IRYS... 🌐');
+        const WebIrys = window.Irys?.WebIrys||window.WebIrys;
+        const irys = new WebIrys({url:'https://node1.irys.xyz',token:'solana',wallet:{rpcUrl:RPC_URL,name:'phantom',provider}});
+        await irys.ready();
+        const price = await irys.getPrice(file.size);
+        await irys.fund(price);
+        const receipt = await irys.upload(window.Buffer.from(await file.arrayBuffer()));
+        const link = 'https://gateway.irys.xyz/'+receipt.id;
+
+        // Salva DNA su Supabase (già nel record del video)
+        // il dna_hash viene salvato insieme al video qui sotto
+
+        const newId = 'video_'+Date.now();
+        const nv = {id:newId,creator,ca,src:link,dna:window.pendingVideoHash,hp:MAX_HP};
+
+        // Salva su Supabase — ora il video è visibile a tutti
+        try {
+            await db.from('videos').insert({
+                id:             newId,
+                creator:        creator,
+                creator_wallet: ca,
+                src:            link,
+                dna_hash:       window.pendingVideoHash,
+                hp:             MAX_HP,
+            });
+            showToast('VIDEO SALVATO SU DB! 🗄️');
+        } catch(e) { console.warn('Supabase insert video failed:', e); }
+
+        feedData.unshift(nv); currentFeedIndex=0; currentHP=MAX_HP;
+        document.getElementById('main-video').src=nv.src;
+        document.getElementById('main-video').play();
+        document.getElementById('creator-name').innerText=nv.creator;
+        toggleDevMenu();
+        showToast('ALPHA PERMANENTE LIVE! 🦈🔥');
+    } catch(e) {
+        console.error(e); showToast('ERRORE: '+(e.message||'Upload fallito'),true);
+    }
+};
+
+window.addEventListener('load',()=>{
+    const btn=document.getElementById('btn-confirm-upload');
+    if(btn) btn.onclick=window.executeUploadProtocol;
+});
+
+// ==============================================
+// CREATOR TREASURE / CLAIM
+// ==============================================
+window.updatePoolDisplay = () => {
+    const ca = creatorWallet();
+    const tb = parseFloat(localStorage.getItem('tb_'+ca))||0;
+    const te = parseFloat(localStorage.getItem('te_'+ca))||0;
+    const tot = tb+te;
+    const d=document.getElementById('creator-shrk-display'); if(d) d.innerText=tot.toFixed(5);
+    const b=document.getElementById('treasure-boost'); if(b) b.innerText=tb.toFixed(5)+' SOL';
+    const e=document.getElementById('treasure-eat');   if(e) e.innerText=te.toFixed(5)+' SOL';
+
+    const THREE_DAYS = 72*60*60*1000;
+    let last = parseInt(localStorage.getItem('lc_'+ca));
+    const now = Date.now();
+    if(!last){last=now;localStorage.setItem('lc_'+ca,last);}
+    const left = THREE_DAYS-(now-last);
+    const btn  = document.getElementById('claim-btn-treasure');
+    const tmr  = document.getElementById('claim-timer-display');
+    if(left<=0 && tot>0){
+        if(btn){btn.disabled=false;btn.innerText='CLAIM REWARDS';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer border-none';}
+        if(tmr){tmr.innerText='READY FOR HARVEST 🦈';tmr.className='text-center text-[10px] text-emerald-400 mt-3 uppercase font-bold animate-pulse';}
+    } else {
+        if(btn){btn.disabled=true;btn.innerText='CLAIM LOCKED';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5';}
+        const h=Math.floor(Math.max(0,left)/(1000*60*60));
+        const m=Math.floor((Math.max(0,left)%(1000*60*60))/(1000*60));
+        if(tmr) tmr.innerText = tot>0 ? 'LOCKED: '+h+'H '+m+'M' : 'NO FUNDS YET';
+    }
+};
+
+window.claimCreatorFunds = () => {
+    const ca  = creatorWallet();
+    const tot = (parseFloat(localStorage.getItem('tb_'+ca))||0)+(parseFloat(localStorage.getItem('te_'+ca))||0);
+    if(tot<=0) return showToast('TREASURE EMPTY 🦈',true);
+    showToast('CLAIMING '+tot.toFixed(5)+' SOL... ⚡');
+    setTimeout(()=>{
+        localStorage.setItem('lc_'+ca,Date.now());
+        localStorage.setItem('tb_'+ca,0); localStorage.setItem('te_'+ca,0);
+        updatePoolDisplay();
+        showToast('BOUNTY SECURED! 🟢 (On-chain claim coming soon)');
+    },1500);
+};
+
+window.updateJusticeDisplay = () => {
+    const el=document.getElementById('foundation-total-display');
+    if(el) el.innerText=(parseFloat(localStorage.getItem('justice_total'))||0).toFixed(4);
+};
+
+// ==============================================
+// UPDATE VISUALS
+// ==============================================
+window.updateVisuals = () => {
+    const video  = document.getElementById('main-video');
+    const hpText = document.getElementById('hp-display');
+    const hpBar  = document.getElementById('hp-bar');
+    const stat   = document.getElementById('static-overlay');
+    // HP saved via saveHP() which handles Supabase + fallback
+    if(!video) return;
+    video.style.filter='none'; video.style.animation='none';
+    if(stat) stat.classList.remove('show-static');
+
+    if(isBanned||currentHP<=0){
+        // GIORNO 9 → 0 HP: nero totale, Signal Lost
+        currentHP=0; video.pause(); video.style.filter='brightness(0)';
+
+    } else if(currentHP<=10000){
+        // GIORNO 8→9 (0–10k): glitch estremo + shake + static
+        // Effetto: distorsione colori, tremore continuo, rumore TV
+        video.style.filter='contrast(200%) saturate(600%) hue-rotate(100deg) brightness(0.7)';
+        video.style.animation='shake 0.08s infinite';
+        if(stat) stat.classList.add('show-static');
+
+    } else if(currentHP<=20000){
+        // GIORNO 7→8 (10k–20k): bianco/nero + rumore
+        // Effetto: desaturazione totale, lieve scurimento, contrasto alto
+        const t = currentHP/10000; // da 1.0 a 2.0 — interpolazione
+        video.style.filter=`grayscale(100%) contrast(${130+20*(2-t)}%) brightness(${0.65+0.1*(t-1)})`;
+
+    } else if(currentHP<=30000){
+        // GIORNO 6→7 (20k–30k): colori alterati, inizio degrado
+        // Effetto: saturazione in eccesso + lieve hue shift che aumenta gradualmente
+        const t = (currentHP-20000)/10000; // da 0.0 a 1.0
+        const sat = Math.round(150 + 150*(1-t));   // 150% → 300%
+        const hue = Math.round(20*(1-t));           // 0° → 20°
+        const bri = (0.75 + 0.25*t).toFixed(2);    // 0.75 → 1.0
+        video.style.filter=`saturate(${sat}%) hue-rotate(${hue}deg) brightness(${bri}) contrast(110%)`;
+    }
+    // Sopra 30.000 HP → video perfetto, nessun filtro
+
+    if(hpText){
+        hpText.innerText = currentHP>=100000?Math.floor(currentHP/1000)+'K':currentHP.toFixed(0);
+        // Testo HP diventa giallo a giorno 6, rosso a giorno 7
+        hpText.className = currentHP<=20000?'text-red-500 font-black animate-pulse':currentHP<=30000?'text-yellow-500 font-bold':'text-blue-500 font-bold';
+    }
+    if(hpBar){
+        const pct=Math.max(0,Math.min(100,(currentHP/MAX_HP)*100));
+        hpBar.style.width=pct+'%';
+        // Barra: blu > 30k, giallo 20k–30k, rosso sotto 20k
+        hpBar.className='h-full rounded-full transition-all duration-1000 '+(pct>33?'bg-blue-500':pct>22?'bg-yellow-500':'bg-red-500');
+    }
+    const ul=document.getElementById('upload-sol-cost');
+    if(ul) ul.innerText=(0.01/window.solPriceUSD).toFixed(5);
+};
+
+// ==============================================
+// HP DECAY TIMER
+// ==============================================
+setInterval(()=>{
+    if(currentHP>0&&!isPaused&&!isBanned){
+        currentHP=Math.max(0,currentHP-DECAY_PER_SEC);
+        // Salva su Supabase ogni 30 secondi (non ogni secondo per evitare spam)
+        if(!window._hpSaveCounter) window._hpSaveCounter=0;
+        window._hpSaveCounter++;
+        if(window._hpSaveCounter>=30){
+            window.saveHP(currentVideo().id, currentHP);
+            window._hpSaveCounter=0;
+        }
+        updateVisuals();
+    }
+    const lo=document.getElementById('signal-lost-overlay');
+    const v =document.getElementById('main-video');
+    if(currentHP<=0){
+        if(lo?.classList.contains('hidden')){lo.classList.remove('hidden');if(v)v.pause();}
+        updateReviveCost();
+    } else {
+        if(lo&&!lo.classList.contains('hidden')){lo.classList.add('hidden');if(v&&!isPaused)v.play();}
+    }
+},1000);
+
+// ==============================================
+// WALLET CONNECT
+// ==============================================
+window.connectWallet = async () => {
+    if(window.solana?.isPhantom){
+        try {
+            const resp = await window.solana.connect();
+            const pk   = resp.publicKey;
+            const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+            const bal  = await conn.getBalance(pk);
+            document.getElementById('wallet-text').innerText=(bal/1e9).toFixed(2)+' SOL | '+pk.toString().slice(0,4)+'...';
+            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            showToast('Sincronizzato con Solana 🦈');
+        } catch { showToast('CONNESSIONE FALLITA',true); }
+    } else { alert('Phantom Wallet non trovato! (Usa Chrome + estensione)'); }
+};
+
+// ==============================================
+// UI HELPERS
+// ==============================================
+window.toggleComments = () => {
+    const d=document.getElementById('comment-drawer');
+    if(d){d.classList.toggle('translate-y-full');d.classList.toggle('translate-y-0');}
+};
+window.togglePlay = () => {
+    if(isBanned||currentHP<=0) return;
+    const v=document.getElementById('main-video');
+    if(v.paused){v.play();isPaused=false;showToast('Playing ▶');}
+    else{v.pause();isPaused=true;showToast('Paused ⏸');}
+};
+function toggleMute(){
+    const v=document.getElementById('main-video');
+    const i=document.getElementById('audio-icon');
+    v.muted=!v.muted;
+    i.className=v.muted?'fas fa-volume-mute text-lg text-gray-500':'fas fa-volume-up text-lg text-white animate-pulse';
+    showToast(v.muted?'Muted 🔇':'Unmuted 🔊');
+}
+function postComment(){
+    const i=document.getElementById('comment-input');
+    if(!i.value.trim()) return;
+    document.getElementById('comments-list').insertAdjacentHTML('afterbegin','<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-500 flex-shrink-0"></div><div><p class="text-xs font-bold text-gray-400">@You</p><p class="text-sm text-gray-200">'+i.value+'</p></div></div>');
+    i.value='';
+}
+window.toggleFollow = () => {
+    const cr=currentVideo().creator;
+    const k='follow_'+cr;
+    const is=localStorage.getItem(k)!=='true';
+    localStorage.setItem(k,is);
+    const b=document.getElementById('follow-badge');
+    if(b){b.className=is?'absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-zinc-600 rounded-full flex items-center justify-center text-[8px] border border-black':'absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center text-[8px] border border-black';b.innerHTML=is?'<i class="fas fa-check"></i>':'<i class="fas fa-plus"></i>';}
+    showToast(is?'Following: '+cr:'Unfollowed: '+cr);
+};
+window.updateInteractionUI = () => {
+    const vid=currentVideo().id;
+    const addr=window.solana?.publicKey?.toString()||'anon';
+    // Check like status (usa localStorage come cache veloce, Supabase come source of truth)
+    const liked = localStorage.getItem('lkd_'+addr+'_'+vid)==='true';
+    const icon=document.getElementById('like-icon');
+    if(icon){icon.className=liked?'fas fa-anchor text-2xl text-blue-500':'fas fa-anchor text-2xl text-white transition-colors duration-300';icon.style.textShadow=liked?'0 0 15px rgba(59,130,246,0.8)':'none';}
+};
+window.toggleDevMenu = () => {
+    const m=document.getElementById('dev-menu');
+    if(m.classList.contains('hidden')){
+        m.classList.remove('hidden');m.classList.add('flex');
+        updatePoolDisplay();updateJusticeDisplay();updateOraclePrice();updatePriceLabels();
+        if(window.solana?.publicKey){
+            const pk=window.solana.publicKey.toString();
+            const wf=document.getElementById('new-video-ca');
+            if(wf&&!wf.value){wf.value=pk;wf.readOnly=true;wf.classList.add('opacity-50','cursor-not-allowed');}
+            const saved=localStorage.getItem('profile_'+pk);
+            const cf=document.getElementById('new-video-creator');
+            if(saved&&cf&&!cf.value){cf.value=saved;cf.readOnly=true;cf.classList.add('opacity-50','cursor-not-allowed');}
+        }
+    } else { m.classList.add('hidden');m.classList.remove('flex'); }
+};
+window.startProtocol = async () => {
+    updateOraclePrice();
+    const ph=document.getElementById('placeholder');
+    if(ph) ph.style.opacity='0';
+    showToast('CARICAMENTO FEED... 🌐');
+    await window.loadFeed();
+    const v=document.getElementById('main-video');
+    if(v&&feedData.length){
+        v.src=feedData[0].src;
+        v.load();
+        v.play().catch(e=>console.log('Autoplay:',e));
+        document.getElementById('creator-name').innerText=feedData[0].creator;
+    }
+    updateVisuals();
+    showToast('PROTOCOL ONLINE 🦈');
+    setTimeout(()=>{if(ph)ph.classList.add('hidden');},500);
+};
+
+// ==============================================
+// SWIPE SYSTEM
+// ==============================================
+let touchStartY=0,touchEndY=0;
+window.addEventListener('touchstart',e=>{touchStartY=e.changedTouches[0].screenY;},{passive:true});
+window.addEventListener('touchend',e=>{touchEndY=e.changedTouches[0].screenY;handleSwipe();},{passive:true});
+window.addEventListener('wheel',e=>{
+    if(isSwiping||!document.getElementById('dev-menu').classList.contains('hidden')||!document.getElementById('comment-drawer').classList.contains('translate-y-full')) return;
+    if(e.deltaY>50) handleSwipeDirection('up');
+    else if(e.deltaY<-50) handleSwipeDirection('down');
+},{passive:true});
+function handleSwipe(){
+    if(!document.getElementById('dev-menu').classList.contains('hidden')||!document.getElementById('comment-drawer').classList.contains('translate-y-full')) return;
+    if(touchStartY-touchEndY>50) handleSwipeDirection('up');
+    else if(touchEndY-touchStartY>50) handleSwipeDirection('down');
+}
+function handleSwipeDirection(dir){
+    if(isSwiping) return; isSwiping=true;
+    const v=document.getElementById('main-video'); const muted=v.muted;
+    if(dir==='up') currentFeedIndex=(currentFeedIndex+1)%feedData.length;
+    else currentFeedIndex=(currentFeedIndex-1+feedData.length)%feedData.length;
+    const cur=feedData[currentFeedIndex];
+    // HP viene dal feed (già aggiornato da Supabase al caricamento)
+    currentHP = cur.hp || MAX_HP;
+    v.src=cur.src; v.muted=muted; v.play().catch(e=>console.log(e));
+    document.getElementById('creator-name').innerText=cur.creator;
+    const ic=document.getElementById('audio-icon');
+    if(ic) ic.className=muted?'fas fa-volume-mute text-lg text-gray-500':'fas fa-volume-up text-lg text-white animate-pulse';
+    isBanned=false; updateVisuals(); updateInteractionUI();
+    showToast('Signal: '+cur.creator);
+    setTimeout(()=>{isSwiping=false;},600);
+}
+
+// ==============================================
+// AUTO-CONNECT + INIT
+// ==============================================
+window.addEventListener('load', async ()=>{
+    if(window.solana?.isPhantom){
+        try{ await window.solana.connect({onlyIfTrusted:true}); }
+        catch{ console.log('Waiting for manual connect'); }
+    }
+    await window.updateOraclePrice();
+    updateVisuals();
+    // Pre-carica il feed in background (senza bloccare la UI)
+    window.loadFeed().catch(e=>console.warn('Pre-load feed failed:', e));
+});
+</script>
+</body>
+</html>
