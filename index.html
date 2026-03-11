@@ -835,17 +835,21 @@ window.executeUploadProtocol = async () => {
         showToast('FEE PAGATA ✅');
 
         // STEP 2: Upload su Arweave via Irys REST API
-        // Usiamo le API REST di Irys — nessuna libreria necessaria
         showToast('STEP 2/3: UPLOAD SU ARWEAVE... 🌐');
+        console.log('STEP 2: inizio upload');
 
         // 2a. Leggi il file
         const arrayBuffer = await file.arrayBuffer();
         const fileBytes   = new Uint8Array(arrayBuffer);
         const fileSize    = fileBytes.length;
+        console.log('STEP 2a: file letto, size:', fileSize);
 
         // 2b. Chiedi il prezzo a Irys
+        console.log('STEP 2b: richiesta prezzo Irys...');
         const priceRes  = await fetch('https://node1.irys.xyz/price/solana/'+fileSize);
+        console.log('STEP 2b: risposta prezzo status:', priceRes.status);
         const priceData = await priceRes.json();
+        console.log('STEP 2b: prezzo ricevuto:', priceData);
         const priceLamports = parseInt(priceData);
         showToast('COSTO STORAGE: '+(priceLamports/window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(6)+' SOL');
 
