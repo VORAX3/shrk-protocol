@@ -917,7 +917,10 @@ window.executeUploadProtocol = async () => {
         showToast('ALPHA PERMANENTE LIVE! 🦈🔥');
 
     } catch(e) {
-        console.error('Upload error:', e);
+        console.error('=== UPLOAD ERROR DETAILS ===');
+        console.error('Message:', e.message);
+        console.error('Stack:', e.stack);
+        console.error('Full error:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
         showToast('ERRORE: '+(e.message||'Upload fallito'),true);
     }
 };
