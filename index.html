@@ -834,77 +834,36 @@ window.executeUploadProtocol = async () => {
         await conn.confirmTransaction(feeSig,'confirmed');
         showToast('FEE PAGATA ✅');
 
-        // STEP 2: Upload su Arweave via Irys REST API
-        showToast('STEP 2/3: UPLOAD SU ARWEAVE... 🌐');
-        console.log('STEP 2: inizio upload');
+        // STEP 2: Upload su Cloudinary (CDN veloce, gratuito fino a 25GB)
+        // ⚠️ SOSTITUISCI 'YOUR_CLOUD_NAME' con il tuo cloud name Cloudinary
+        const CLOUDINARY_CLOUD = 'dcqzabwwp';
+        const CLOUDINARY_PRESET = 'shrk_videos'; // unsigned upload preset
 
-        // 2a. Leggi il file
-        const arrayBuffer = await file.arrayBuffer();
-        const fileBytes   = new Uint8Array(arrayBuffer);
-        const fileSize    = fileBytes.length;
-        console.log('STEP 2a: file letto, size:', fileSize);
+        showToast('STEP 2/3: UPLOAD VIDEO... 🌐');
+        console.log('STEP 2: inizio upload Cloudinary');
 
-        // 2b. Chiedi il prezzo a Irys
-        console.log('STEP 2b: richiesta prezzo Irys...');
-        const priceRes  = await fetch('https://node1.irys.xyz/price/solana/'+fileSize);
-        console.log('STEP 2b: risposta prezzo status:', priceRes.status);
-        const priceData = await priceRes.json();
-        console.log('STEP 2b: prezzo ricevuto:', priceData);
-        const priceLamports = parseInt(priceData);
-        showToast('COSTO STORAGE: '+(priceLamports/window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(6)+' SOL');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_PRESET);
+        formData.append('resource_type', 'video');
+        formData.append('folder', 'shrk_protocol');
+        // Aggiungi wallet come tag per tracciabilità
+        formData.append('tags', provider.publicKey.toString());
 
-        // 2c. Paga Irys
-        console.log('STEP 2c: pagamento Irys, lamports:', priceLamports);
-        const irysPubkey = new window.solanaWeb3.PublicKey('HTnAaAqzLGmAkCGH3TzKPkWj4NuC5CZJuWEJBMoNhDu9');
-        const irysPayTx = new window.solanaWeb3.Transaction().add(
-            window.solanaWeb3.SystemProgram.transfer({
-                fromPubkey: provider.publicKey,
-                toPubkey:   irysPubkey,
-                lamports:   priceLamports,
-            })
+        const uploadRes = await fetch(
+            'https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/video/upload',
+            { method: 'POST', body: formData }
         );
-        const {blockhash:b2} = await conn.getLatestBlockhash();
-        irysPayTx.recentBlockhash=b2; irysPayTx.feePayer=provider.publicKey;
-        const {signature:irysSig} = await provider.signAndSendTransaction(irysPayTx);
-        showToast('PAGAMENTO ARWEAVE INVIATO... ⛓️');
-        await conn.confirmTransaction(irysSig,'confirmed');
-        console.log('STEP 2c: pagamento confermato, sig:', irysSig);
 
-        // 2d. Notifica fund a Irys
-        console.log('STEP 2d: notifica fund a Irys...');
-        const fundRes = await fetch('https://node1.irys.xyz/account/balance/solana', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({tx_id: irysSig})
-        });
-        console.log('STEP 2d: fund response status:', fundRes.status);
-        const fundData = await fundRes.text();
-        console.log('STEP 2d: fund response body:', fundData);
+        console.log('STEP 2: upload status:', uploadRes.status);
+        const uploadData = await uploadRes.json();
+        console.log('STEP 2: upload response:', uploadData);
 
-        // 2e. Upload del file
-        console.log('STEP 2e: upload file, size:', fileBytes.length, 'type:', file.type);
-        showToast('CARICAMENTO FILE... 📦');
-        const uploadRes = await fetch('https://node1.irys.xyz/tx/solana', {
-            method:  'POST',
-            headers: {
-                'Content-Type': file.type || 'video/mp4',
-                'x-pub-key':    provider.publicKey.toString(),
-            },
-            body: fileBytes,
-        });
-        console.log('STEP 2e: upload response status:', uploadRes.status);
-        const uploadText = await uploadRes.text();
-        console.log('STEP 2e: upload response body:', uploadText);
+        if(uploadData.error) throw new Error('Cloudinary: '+uploadData.error.message);
 
-        if(!uploadRes.ok) {
-            throw new Error('Irys upload failed ('+uploadRes.status+'): '+uploadText);
-        }
-
-        const uploadData = JSON.parse(uploadText);
-        const receiptId  = uploadData.id;
-        const link       = 'https://gateway.irys.xyz/'+receiptId;
-        console.log('Arweave link:', link);
-        showToast('ARWEAVE OK! ID: '+receiptId.substring(0,12)+'... ✅');
+        const link = uploadData.secure_url;
+        console.log('Video URL:', link);
+        showToast('VIDEO CARICATO! ✅');
 
         // STEP 3: Salva su Supabase
         showToast('STEP 3/3: REGISTRAZIONE ON-CHAIN... 🗄️');
