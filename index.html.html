@@ -813,53 +813,111 @@ window.executeUploadProtocol = async () => {
     const creator = document.getElementById('new-video-creator').value;
     const ca      = document.getElementById('new-video-ca').value;
     const provider = window.solana||window.phantom?.solana;
+    if(!file||!creator||!ca||!provider?.publicKey) return showToast('Dati mancanti ⚠️',true);
+
     try {
-        showToast('PREPARAZIONE... ⏳');
+        // STEP 1: Pagamento fee piattaforma $0.01
+        showToast('STEP 1/3: FEE PIATTAFORMA... 🦈');
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
         const feeLamports = usdToLamports(0.01);
-        const feeTx = new window.solanaWeb3.Transaction().add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(PLATFORM_WALLET),lamports:feeLamports}));
+        const feeTx = new window.solanaWeb3.Transaction().add(
+            window.solanaWeb3.SystemProgram.transfer({
+                fromPubkey: provider.publicKey,
+                toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
+                lamports:   feeLamports,
+            })
+        );
         const {blockhash} = await conn.getLatestBlockhash();
         feeTx.recentBlockhash=blockhash; feeTx.feePayer=provider.publicKey;
-        showToast('FEE $0.01 → Platform... 🦈');
-        const {signature} = await provider.signAndSendTransaction(feeTx);
-        await conn.confirmTransaction(signature,'confirmed');
+        const {signature:feeSig} = await provider.signAndSendTransaction(feeTx);
+        await conn.confirmTransaction(feeSig,'confirmed');
+        showToast('FEE PAGATA ✅');
 
-        showToast('UPLOAD SU IRYS... 🌐');
-        const WebIrys = window.Irys?.WebIrys||window.WebIrys;
-        const irys = new WebIrys({url:'https://node1.irys.xyz',token:'solana',wallet:{rpcUrl:RPC_URL,name:'phantom',provider}});
-        await irys.ready();
-        const price = await irys.getPrice(file.size);
-        await irys.fund(price);
-        const receipt = await irys.upload(window.Buffer.from(await file.arrayBuffer()));
-        const link = 'https://gateway.irys.xyz/'+receipt.id;
+        // STEP 2: Upload su Arweave via Irys REST API
+        // Usiamo le API REST di Irys — nessuna libreria necessaria
+        showToast('STEP 2/3: UPLOAD SU ARWEAVE... 🌐');
 
-        // Salva DNA su Supabase (già nel record del video)
-        // il dna_hash viene salvato insieme al video qui sotto
+        // 2a. Leggi il file
+        const arrayBuffer = await file.arrayBuffer();
+        const fileBytes   = new Uint8Array(arrayBuffer);
+        const fileSize    = fileBytes.length;
 
+        // 2b. Chiedi il prezzo a Irys
+        const priceRes  = await fetch('https://node1.irys.xyz/price/solana/'+fileSize);
+        const priceData = await priceRes.json();
+        const priceLamports = parseInt(priceData);
+        showToast('COSTO STORAGE: '+(priceLamports/window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(6)+' SOL');
+
+        // 2c. Paga Irys
+        const irysPubkey = new window.solanaWeb3.PublicKey('HTnAaAqzLGmAkCGH3TzKPkWj4NuC5CZJuWEJBMoNhDu9');
+        const irysPayTx = new window.solanaWeb3.Transaction().add(
+            window.solanaWeb3.SystemProgram.transfer({
+                fromPubkey: provider.publicKey,
+                toPubkey:   irysPubkey,
+                lamports:   priceLamports,
+            })
+        );
+        const {blockhash:b2} = await conn.getLatestBlockhash();
+        irysPayTx.recentBlockhash=b2; irysPayTx.feePayer=provider.publicKey;
+        const {signature:irysSig} = await provider.signAndSendTransaction(irysPayTx);
+        showToast('PAGAMENTO ARWEAVE INVIATO... ⛓️');
+        await conn.confirmTransaction(irysSig,'confirmed');
+
+        // 2d. Fai il fund su Irys (notifica che abbiamo pagato)
+        await fetch('https://node1.irys.xyz/account/balance/solana', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({tx_id: irysSig})
+        });
+
+        // 2e. Upload del file
+        showToast('CARICAMENTO FILE... 📦');
+        const uploadRes = await fetch('https://node1.irys.xyz/tx/solana', {
+            method:  'POST',
+            headers: {
+                'Content-Type': file.type || 'video/mp4',
+                'x-pub-key':    provider.publicKey.toString(),
+            },
+            body: fileBytes,
+        });
+
+        if(!uploadRes.ok) {
+            const errText = await uploadRes.text();
+            throw new Error('Irys upload failed: '+errText);
+        }
+
+        const uploadData = await uploadRes.json();
+        const receiptId  = uploadData.id;
+        const link       = 'https://gateway.irys.xyz/'+receiptId;
+        console.log('Arweave link:', link);
+        showToast('ARWEAVE OK! ID: '+receiptId.substring(0,12)+'... ✅');
+
+        // STEP 3: Salva su Supabase
+        showToast('STEP 3/3: REGISTRAZIONE ON-CHAIN... 🗄️');
         const newId = 'video_'+Date.now();
+        await db.from('videos').insert({
+            id:             newId,
+            creator:        creator,
+            creator_wallet: ca,
+            src:            link,
+            dna_hash:       window.pendingVideoHash || null,
+            hp:             MAX_HP,
+        });
+
+        // Aggiorna feed locale
         const nv = {id:newId,creator,ca,src:link,dna:window.pendingVideoHash,hp:MAX_HP};
-
-        // Salva su Supabase — ora il video è visibile a tutti
-        try {
-            await db.from('videos').insert({
-                id:             newId,
-                creator:        creator,
-                creator_wallet: ca,
-                src:            link,
-                dna_hash:       window.pendingVideoHash,
-                hp:             MAX_HP,
-            });
-            showToast('VIDEO SALVATO SU DB! 🗄️');
-        } catch(e) { console.warn('Supabase insert video failed:', e); }
-
-        feedData.unshift(nv); currentFeedIndex=0; currentHP=MAX_HP;
+        feedData.unshift(nv);
+        currentFeedIndex=0;
+        currentHP=MAX_HP;
         document.getElementById('main-video').src=nv.src;
         document.getElementById('main-video').play();
         document.getElementById('creator-name').innerText=nv.creator;
         toggleDevMenu();
         showToast('ALPHA PERMANENTE LIVE! 🦈🔥');
+
     } catch(e) {
-        console.error(e); showToast('ERRORE: '+(e.message||'Upload fallito'),true);
+        console.error('Upload error:', e);
+        showToast('ERRORE: '+(e.message||'Upload fallito'),true);
     }
 };
 
@@ -1139,3 +1197,4 @@ window.addEventListener('load', async ()=>{
 </script>
 </body>
 </html>
+S
