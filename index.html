@@ -13,7 +13,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://bundle.run/buffer@6.0.3"></script>
     <script>window.global=window;window.Buffer=window.buffer.Buffer;</script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.90.0/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.0/lib/index.iife.min.js"></script>
     <script src="https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -447,11 +447,12 @@ window.updateOraclePrice = async () => {
             console.log('Oracle: SHRK=$'+window.currentShrkPrice.toFixed(6)+' SOL=$'+window.solPriceUSD.toFixed(2));
             updatePriceLabels();
         }
-    } catch(e) { console.warn('Oracle offline, fallback prices'); }
+    } catch(e) { console.warn('Oracle offline, fallback prices'); if(!window.solPriceUSD) window.solPriceUSD = 140; }
 };
+window.solPriceUSD = 140; // fallback iniziale
 setInterval(window.updateOraclePrice, 30000); // un solo interval a 30s
 
-const usdToLamports = usd => Math.floor((usd/window.solPriceUSD)*window.solanaWeb3.LAMPORTS_PER_SOL);
+const usdToLamports = usd => Math.floor((usd/(window.solPriceUSD||140))*window.solanaWeb3.LAMPORTS_PER_SOL);
 
 function updatePriceLabels() {
     const u = document.getElementById('upload-sol-cost');
