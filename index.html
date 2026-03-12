@@ -548,7 +548,7 @@ window.checkShrkGate = async (provider) => {
         showToast('VERIFYING $SHRK... 🔍');
         const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-gate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer '+SUPABASE_ANON },
             body: JSON.stringify({ wallet: provider.publicKey.toString(), rpcUrl: RPC_URL })
         });
         const data = await res.json();
@@ -561,7 +561,7 @@ window.checkShrkGate = async (provider) => {
 async function voraxAction(action, videoId, wallet) {
     const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer '+SUPABASE_ANON },
         body: JSON.stringify({ action, videoId, wallet, solPriceUSD: window.solPriceUSD })
     });
     const data = await res.json();
