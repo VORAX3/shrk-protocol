@@ -708,7 +708,7 @@ window.confirmPredatorEat = async () => {
     try {
         const vid  = currentVideo().id;
         const addr = provider.publicKey.toString();
-                if(!await checkSolBalance(provider, 0.02)) { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} return; }
+                if(!await checkSolBalance(provider, 0.02)) return;
         const { splits, newHp } = await voraxAction('eat', vid, addr);
         showToast('CHOMP: '+(0.02/window.solPriceUSD).toFixed(5)+' SOL 🩸');
         const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
@@ -762,7 +762,7 @@ window.confirmReportAttack = async () => {
     const userWallet = provider?.publicKey?.toString() || 'anon';
     window.hideReportSheet();
     try {
-                if(!await checkSolBalance(provider, 0.09)) { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} return; }
+                if(!await checkSolBalance(provider, 0.09)) return;
         const { splits } = await voraxAction('report', vid, userWallet);
         showToast('JUDGMENT: '+(0.09/window.solPriceUSD).toFixed(5)+' SOL → Limbo ⚖️');
         const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
