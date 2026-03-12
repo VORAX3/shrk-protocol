@@ -398,7 +398,7 @@ let isBanned   = false;
 let isSwiping  = false;
 
 const currentVideo  = () => feedData[currentFeedIndex] || {};
-const creatorWallet = () => currentVideo().ca || PLATFORM_WALLET;
+const creatorWallet = () => currentVideo().ca || '';
 
 // Carica il feed da Supabase ordinato per HP decrescente
 window.loadFeed = async () => {
@@ -793,43 +793,19 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
-
+    if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌', true);
+    if(!await window.checkShrkGate(provider)) return;
     const vid  = currentVideo().id;
-
+    const addr = provider.publicKey.toString();
     try {
-        // 1 lamport simbolico — forza apertura Phantom e connette il wallet
-        const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
-        const tx = new window.solanaWeb3.Transaction().add(
-            window.solanaWeb3.SystemProgram.transfer({
-                fromPubkey: provider.publicKey,
-                toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
-                lamports:   1,
-            })
-        );
-        const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = provider.publicKey;
-        const {signature} = await provider.signAndSendTransaction(tx);
-        await conn.confirmTransaction(signature, 'confirmed');
-
-        // Ora il wallet è connesso — verifica $SHRK
-        const ok = await window.checkShrkGate(provider);
-        if(!ok) return;
-
-        const addr = provider.publicKey.toString();
-
-        // Save repost — inherits current HP of original video
-        const currentHp = currentVideo().hp || currentHP;
         await db.from('reposts').upsert({
             video_id: vid,
             reposter_wallet: addr,
             original_creator_wallet: creatorWallet(),
         }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
-
         showToast('REPOSTED! 🔁 You earn 10% from every interaction on your repost 🦈');
     } catch(e) {
-        console.error('Repost error:', e);
-        showToast(e.message?.includes('User rejected') ? 'REPOST CANCELED' : 'ERROR: Repost failed', true);
+        showToast('REPOST FAILED ❌', true);
     }
 };
 
@@ -898,7 +874,7 @@ window.executeUploadProtocol = async () => {
             const feeTx = new window.solanaWeb3.Transaction().add(
                 window.solanaWeb3.SystemProgram.transfer({
                     fromPubkey: provider.publicKey,
-                    toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
+                    toPubkey:   new window.solanaWeb3.PublicKey('7j7KEbQ9Qm9rZJGN8hD3TGowZmta8eFwmZEBVmpqvnoD'),
                     lamports:   feeLamports,
                 })
             );
