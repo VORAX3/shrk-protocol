@@ -778,7 +778,10 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
-    if(!provider?.publicKey) return showToast('CONNECT WALLET FIRST! 🔌', true);
+    if(!provider?.publicKey) {
+        await window.connectWallet();
+        return;
+    }
     const ok = await window.checkShrkGate(provider);
     if(!ok) return;
 
