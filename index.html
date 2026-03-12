@@ -1171,13 +1171,12 @@ window.loadProfile = async () => {
         return;
     }
     const addr = pubkey.toString();
-    const short = addr.slice(0,4)+'...'+addr.slice(-4);
     // Mostra subito layout base
     section.innerHTML = `
         <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-900 rounded-xl">
             <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center"><i class="fas fa-user text-white"></i></div>
             <div>
-                <p class="text-white font-bold text-xs">${short}</p>
+                <p class="text-white font-bold text-xs">${addr.slice(0,4)+'...'+addr.slice(-4)}</p>
                 <p id="profile-sol" class="text-zinc-400 text-[9px]">Loading...</p>
             </div>
         </div>
