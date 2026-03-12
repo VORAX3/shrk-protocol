@@ -540,7 +540,7 @@ function updateReviveCost() {
 }
 
 // ==============================================
-// SHRK GATE — logic protected via Edge Function
+// SHRK GATE: verifica >= 5000 SHRK
 // ==============================================
 window.checkShrkGate = async (provider) => {
     if(!provider?.publicKey) { showToast('CONNECT WALLET FIRST! 🔌',true); return false; }
@@ -555,13 +555,9 @@ window.checkShrkGate = async (provider) => {
         if(data.error) { showToast('GATE ERROR ❌', true); return false; }
         if(!data.passed) { showToast('NEED 5,000 $SHRK TO INTERACT 🦈', true); return false; }
         return true;
-    } catch(e) {
-        showToast('GATE CHECK FAILED ❌', true);
-        return false;
-    }
+    } catch(e) { showToast('GATE CHECK FAILED ❌', true); return false; }
 };
 
-// Helper: call vorax-action edge function (splits protected server-side)
 async function voraxAction(action, videoId, wallet) {
     const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-action', {
         method: 'POST',
@@ -571,78 +567,99 @@ async function voraxAction(action, videoId, wallet) {
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || 'Action failed');
     return data;
+};
+
+// ==============================================
+// HELPER: build split SOL transaction
+// ==============================================
+async function buildSplitTx(provider, conn, splits) {
+    const tx = new window.solanaWeb3.Transaction();
+    splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:s.to,lamports:s.lamports})); });
+    const {blockhash} = await conn.getLatestBlockhash();
+    tx.recentBlockhash = blockhash;
+    tx.feePayer = provider.publicKey;
+    return tx;
 }
 
+// ==============================================
+// BOOST — $0.29 → 70% creator / 15% platform / 15% justice
+// ==============================================
 window.fanBoost = async () => {
     if(isBanned) return showToast('CONTENT BANNED',true);
     const provider = window.solana || window.phantom?.solana;
     if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌',true);
     if(!await window.checkShrkGate(provider)) return;
     const btn = document.getElementById('btn-boost');
-    const orig = btn.innerHTML;
-    btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin text-4xl"></i>';
+    if(btn){btn.disabled=true;btn.classList.add('animate-pulse');}
     try {
         const vid  = currentVideo().id;
         const addr = provider.publicKey.toString();
         const { splits, newHp } = await voraxAction('boost', vid, addr);
-        showToast('BOOST ⚡ '+(0.29/window.solPriceUSD).toFixed(5)+' SOL');
+        showToast('BOOSTING: '+(0.29/window.solPriceUSD).toFixed(5)+' SOL ⚡');
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const tx = await buildSplitTx(provider, conn, splits);
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
         const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash; tx.feePayer = provider.publicKey;
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize());
-        await conn.confirmTransaction(sig,'confirmed');
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
         if(window.audioBoost) window.audioBoost.play();
         currentHP = newHp;
         await window.saveHP(vid, currentHP);
-        await window.saveInteraction(vid, addr, 'boost', sig);
+        await window.saveInteraction(vid, addr, 'boost', signature);
         updateVisuals();
-        showToast('BOOSTED! ⚡ +10,000 HP');
-    } catch(e) { showToast('BOOST FAILED ❌ '+e.message,true); }
-    finally { btn.disabled=false; btn.innerHTML=orig; }
+        showToast('BOOST! +10,000 HP ⚡');
+    } catch(e) {
+        showToast(e.message?.includes('User rejected')?'BOOST CANCELED':'BOOST FAILED: '+e.message,true);
+    } finally { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} }
 };
 
+// ==============================================
+// EAT — $0.02
+// ==============================================
 window.voraxBite = async () => {
-    if(isBanned) return showToast('CONTENT BANNED',true);
     const provider = window.solana || window.phantom?.solana;
     if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌',true);
     if(!await window.checkShrkGate(provider)) return;
     document.getElementById('eat-confirm-overlay').classList.remove('hidden');
 };
+window.hideEatModal = () => document.getElementById('eat-confirm-overlay').classList.add('hidden');
 
 window.confirmPredatorEat = async () => {
+    const video = document.getElementById('main-video');
     document.getElementById('eat-confirm-overlay').classList.add('hidden');
     const provider = window.solana || window.phantom?.solana;
-    const btn = document.getElementById('btn-eat');
-    const orig = btn ? btn.innerHTML : '';
-    if(btn) { btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin text-4xl"></i>'; }
     try {
         const vid  = currentVideo().id;
         const addr = provider.publicKey.toString();
         const { splits, newHp } = await voraxAction('eat', vid, addr);
-        showToast('EAT 💀 '+(0.02/window.solPriceUSD).toFixed(5)+' SOL');
+        showToast('CHOMP: '+(0.02/window.solPriceUSD).toFixed(5)+' SOL 🩸');
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const tx = await buildSplitTx(provider, conn, splits);
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
         const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash; tx.feePayer = provider.publicKey;
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize());
-        await conn.confirmTransaction(sig,'confirmed');
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
         if(window.audioBite) window.audioBite.play();
         currentHP = newHp;
         await window.saveHP(vid, currentHP);
-        await window.saveInteraction(vid, addr, 'eat', sig);
+        await window.saveInteraction(vid, addr, 'eat', signature);
+        showToast('SIGNAL ATTACKED! -200 HP 🩸',true);
         const flash = document.createElement('div');
         flash.className='fixed inset-0 z-[9999] pointer-events-none bg-red-600/60 transition-opacity duration-500';
         document.body.appendChild(flash);
-        setTimeout(()=>{flash.style.opacity='0';setTimeout(()=>flash.remove(),500);},300);
+        if(video) video.classList.add('bite-effect');
+        setTimeout(()=>{flash.style.opacity='0';if(video)video.classList.remove('bite-effect');setTimeout(()=>flash.remove(),500);},300);
         updateVisuals();
-        showToast('EATEN! 💀 -200 HP');
-    } catch(e) { showToast(e.message?.includes('ONLY') ? e.message : 'EAT FAILED ❌ '+e.message,true); }
-    finally { if(btn) { btn.disabled=false; btn.innerHTML=orig; } }
+    } catch(e) {
+        showToast(e.message?.includes('ONLY')||e.message?.includes('already')?'ONLY 1 BITE PER VIDEO 🦈':e.message?.includes('User rejected')?'ATTACK ABORTED':'ERROR: '+e.message,true);
+    }
 };
 
+// ==============================================
+// REPORT — $0.09 → 100% Justice Wallet (Limbo)
+// ==============================================
 window.toggleReport = async () => {
     const provider = window.solana || window.phantom?.solana;
     if(!await window.checkShrkGate(provider)) return;
@@ -663,34 +680,59 @@ window.selectCategory = (cat, el) => {
 };
 window.confirmReportAttack = async () => {
     if(!window.selectedReportCategory) return;
-    const provider = window.solana || window.phantom?.solana;
-    const vid = currentVideo().id;
-    const addr = provider?.publicKey?.toString() || 'anon';
+    const provider   = window.solana || window.phantom?.solana;
+    const vid        = currentVideo().id;
+    const userWallet = provider?.publicKey?.toString() || 'anon';
     window.hideReportSheet();
     try {
-        const { splits } = await voraxAction('report', vid, addr);
-        showToast('REPORT ⚖️ '+(0.09/window.solPriceUSD).toFixed(5)+' SOL');
+        const { splits } = await voraxAction('report', vid, userWallet);
+        showToast('JUDGMENT: '+(0.09/window.solPriceUSD).toFixed(5)+' SOL → Limbo ⚖️');
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const tx = await buildSplitTx(provider, conn, splits);
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
         const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash; tx.feePayer = provider.publicKey;
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize());
-        await conn.confirmTransaction(sig,'confirmed');
-        await window.saveInteraction(vid, addr, 'report', sig);
-        const {data:interactions} = await db.from('interactions').select('action').eq('video_id',vid);
-        if(interactions){
-            const total=interactions.length;
-            const reports=interactions.filter(i=>i.action==='report').length;
-            if(total>0 && reports/total>0.75){
-                await db.from('videos').update({is_banned:true}).eq('id',vid);
-                showToast('VIDEO BANNED BY COMMUNITY ⚖️');
-            }
-        }
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+        await window.saveInteraction(vid, userWallet, 'report', signature, 0, window.selectedReportCategory);
+        const flash = document.createElement('div');
+        flash.className='fixed inset-0 z-[9999] pointer-events-none bg-zinc-200/60 transition-opacity duration-500';
+        document.body.appendChild(flash);
+        setTimeout(()=>{flash.style.opacity='0';setTimeout(()=>flash.remove(),500);},300);
+        updateVisuals();
         showToast('REPORTED! ⚖️');
-    } catch(e) { showToast(e.message?.includes('ALREADY') ? e.message : 'REPORT FAILED ❌ '+e.message, true); }
+        checkVideoKill(vid);
+    } catch(e) {
+        showToast(e.message?.includes('ALREADY')||e.message?.includes('already')?'ALREADY REPORTED 🦈':e.message?.includes('User rejected')?'REPORT ABORTED':'ERROR: '+e.message,true);
+    }
 };
 
+// ==============================================
+// JUSTICE SYSTEM: abbattimento video al 75%
+// ==============================================
+async function checkVideoKill(vid) {
+    try {
+        const {data:counts} = await db.from('interactions')
+            .select('action')
+            .eq('video_id', vid);
+        if(!counts||counts.length===0) return;
+        const total   = counts.length;
+        const reports = counts.filter(r=>r.action==='report').length;
+        if(reports/total >= REPORT_THRESHOLD) {
+            isBanned = true; currentHP = 0;
+            await db.from('videos').update({is_banned:true, hp:0}).eq('id', vid);
+            const {data:lf} = await db.from('limbo_fund').select('total_sol,reporter_count').eq('video_id',vid).single();
+            const limboSol = lf?.total_sol||0;
+            const repCount = lf?.reporter_count||reports;
+            showToast('VIDEO CONDEMNED ⚖️ — '+(limboSol).toFixed(4)+' SOL → '+repCount+' reporters 🏆',true);
+            updateVisuals();
+        }
+    } catch(e){ console.warn('checkVideoKill error:', e); }
+}
+
+// ==============================================
+// REVIVE — $2.99 in $SHRK → 100% platform
+// ==============================================
 window.reviveVideo = async () => {
     const provider = window.solana || window.phantom?.solana;
     if(!provider) return showToast('INSTALL PHANTOM! 🛑',true);
@@ -706,21 +748,26 @@ window.reviveVideo = async () => {
         const vid  = currentVideo().id;
         const addr = provider.publicKey.toString();
         const { splits, newHp } = await voraxAction('revive', vid, addr);
-        showToast('REVIVE 💚 '+(2.99/window.solPriceUSD).toFixed(5)+' SOL');
+        showToast('REVIVING: '+(2.99/window.solPriceUSD).toFixed(5)+' SOL 💚');
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const tx = await buildSplitTx(provider, conn, splits);
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
         const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash; tx.feePayer = provider.publicKey;
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize());
-        await conn.confirmTransaction(sig,'confirmed');
-        currentHP = newHp;
-        await db.from('videos').update({hp: 90000, last_tick: new Date().toISOString()}).eq('id', vid);
-        await window.loadFeed();
-        showToast('VIDEO REVIVED! 💚 +90,000 HP');
-    } catch(e) { showToast('REVIVE FAILED ❌ '+e.message, true); }
-    finally { btn.disabled=false; btn.innerHTML=orig; }
-};
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+        currentHP = newHp; isBanned = false;
+        await db.from('videos').update({hp:90000, last_tick:new Date().toISOString()}).eq('id', vid);
+        updateVisuals();
+        document.getElementById('signal-lost-overlay').classList.add('hidden');
+        const v = document.getElementById('main-video');
+        if(v) v.play();
+        showToast('SIGNAL REVIVED! +90,000 HP ⚡🦈');
+    } catch(e) {
+        showToast(e.message?.includes('User rejected')?'CANCELED 🦈':'ERROR: '+e.message,true);
+    } finally { btn.disabled=false; btn.innerHTML=orig; }
+}
+
 
 window.giveLike = async () => {
     const vid  = currentVideo().id;
@@ -939,7 +986,7 @@ window.updatePoolDisplay = () => {
     const b=document.getElementById('treasure-boost'); if(b) b.innerText=tb.toFixed(5)+' SOL';
     const e=document.getElementById('treasure-eat');   if(e) e.innerText=te.toFixed(5)+' SOL';
 
-    const THREE_DAYS = 9*24*60*60*1000; // 9 days cooldown
+    const THREE_DAYS = 9*24*60*60*1000; // 9 days
     let last = parseInt(localStorage.getItem('lc_'+ca));
     const now = Date.now();
     if(!last){last=now;localStorage.setItem('lc_'+ca,last);}
