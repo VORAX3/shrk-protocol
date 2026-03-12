@@ -778,14 +778,11 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
-    const ok = await window.checkShrkGate(provider);
-    if(!ok) return;
 
     const vid  = currentVideo().id;
-    const addr = provider.publicKey.toString();
 
     try {
-        // 1 lamport simbolico — forza apertura Phantom per verificare identità
+        // 1 lamport simbolico — forza apertura Phantom e connette il wallet
         const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
         const tx = new window.solanaWeb3.Transaction().add(
             window.solanaWeb3.SystemProgram.transfer({
@@ -799,6 +796,12 @@ window.shareContent = async () => {
         tx.feePayer = provider.publicKey;
         const {signature} = await provider.signAndSendTransaction(tx);
         await conn.confirmTransaction(signature, 'confirmed');
+
+        // Ora il wallet è connesso — verifica $SHRK
+        const ok = await window.checkShrkGate(provider);
+        if(!ok) return;
+
+        const addr = provider.publicKey.toString();
 
         // Save repost — inherits current HP of original video
         const currentHp = currentVideo().hp || currentHP;
