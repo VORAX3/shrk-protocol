@@ -1231,6 +1231,7 @@ window.toggleDevMenu = () => {
             const cf=document.getElementById('new-video-creator');
             if(saved&&cf&&!cf.value){cf.value=saved;cf.readOnly=true;cf.classList.add('opacity-50','cursor-not-allowed');}
         }
+        window.loadProfile();
     } else { m.classList.add('hidden');m.classList.remove('flex'); }
 };
 window.startProtocol = async () => {
