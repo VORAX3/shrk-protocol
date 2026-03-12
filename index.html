@@ -778,7 +778,7 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
-    if(!provider?.publicKey) {
+    if(!provider?.isConnected) {
         await window.connectWallet();
         return;
     }
