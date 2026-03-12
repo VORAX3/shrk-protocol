@@ -716,6 +716,8 @@ window.confirmReportAttack = async () => {
     const provider   = window.solana || window.phantom?.solana;
     const vid        = currentVideo().id;
     const userWallet = provider?.publicKey?.toString() || 'anon';
+    const alreadyReported = await window.hasInteracted(vid, userWallet, 'report');
+    if(alreadyReported) return showToast('ALREADY REPORTED THIS VIDEO ⚖️', true);
     window.hideReportSheet();
     try {
         const conn  = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
@@ -791,52 +793,38 @@ window.reviveVideo = async () => {
         try { await provider.connect(); showToast('CONNECTED! CLICK REVIVE AGAIN 🦈'); return; }
         catch { return showToast('CONNECTION REJECTED ❌',true); }
     }
+    if(!await window.checkShrkGate(provider)) return;
     const btn = document.getElementById('btn-revive-video');
     const orig = btn.innerHTML;
     btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin text-4xl"></i>';
     try {
-        const conn     = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const mint     = new window.solanaWeb3.PublicKey(SHRK_MINT);  // FIX: usa SHRK_MINT corretto
-        const destWallet = new window.solanaWeb3.PublicKey(PLATFORM_WALLET);
-        const required = Math.ceil(2.99/window.currentShrkPrice);
-        const amount   = BigInt(required)*BigInt(1000000); // 6 decimali
-
-        showToast('PREPARAZIONE: '+required.toLocaleString()+' $SHRK...');
-        const userATA = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
-        const destATA = await window.splToken.getAssociatedTokenAddress(mint, destWallet);
-
-        const tx = new window.solanaWeb3.Transaction();
-        const destInfo = await conn.getAccountInfo(destATA);
-        if(!destInfo) tx.add(window.splToken.createAssociatedTokenAccountInstruction(provider.publicKey,destATA,destWallet,mint));
-        tx.add(window.splToken.createTransferInstruction(userATA,destATA,provider.publicKey,amount));
-
-        const {blockhash} = await conn.getLatestBlockhash('confirmed');
-        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
-
-        showToast('FIRMA SU PHANTOM... ✍️');
-        const {signature} = await provider.signAndSendTransaction(tx);
-        await conn.confirmTransaction(signature,'confirmed');
-
-        currentHP = MAX_HP; isBanned = false;
-        localStorage.setItem('hp_'+currentVideo().id, currentHP);
-        updateVisuals();
-        document.getElementById('signal-lost-overlay').classList.add('hidden');
-        const v = document.getElementById('main-video');
-        if(v) v.play();
-        showToast('SIGNAL REVIVED! +90,000 HP ⚡🦈');
+        const conn   = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const lamports = Math.ceil(2.99 / window.solPriceUSD * 1e9);
+        showToast('REVIVE 💚 '+(2.99/window.solPriceUSD).toFixed(5)+' SOL');
+        const tx = await buildSplitTx(provider, conn, [{to: new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports}]);
+        const {blockhash} = await conn.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.feePayer = provider.publicKey;
+        const signed = await provider.signTransaction(tx);
+        const sig = await conn.sendRawTransaction(signed.serialize());
+        await conn.confirmTransaction(sig,'confirmed');
+        const vid = currentVideo().id;
+        await db.from('videos').update({hp: 90000, last_tick: new Date().toISOString()}).eq('id', vid);
+        await window.loadFeed();
+        showToast('VIDEO REVIVED! 💚 +90,000 HP');
     } catch(e) {
-        showToast(e.message?.includes('User rejected')?'CANCELED 🦈':'ERROR: '+e.message,true);
-    } finally { btn.disabled=false; btn.innerHTML=orig; }
-};
+        showToast('REVIVE FAILED ❌ '+e.message, true);
+    } finally {
+        btn.disabled=false; btn.innerHTML=orig;
+    }
+}
 
-// ==============================================
-// LIKE (gratis)
-// ==============================================
+
 window.giveLike = async () => {
     const vid  = currentVideo().id;
     const addr = window.solana?.publicKey?.toString()||'anon';
     const already = await window.hasInteracted(vid, addr, 'like');
-    if(already) return showToast("Hai già calato l'ancora! ⚓💙");
+    if(already) return showToast("ALREADY LIKED! ⚓💙");
     const icon = document.getElementById('like-icon');
     if(icon){icon.className='fas fa-anchor text-2xl text-blue-500';icon.style.textShadow='0 0 15px rgba(59,130,246,0.8)';}
     currentHP += 10;
