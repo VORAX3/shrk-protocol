@@ -1174,16 +1174,16 @@ window.loadProfile = async () => {
     const addr = pubkey.toString();
     const short = addr.slice(0,4)+'...'+addr.slice(-4);
 
-    // Carica SOL balance
+    // Carica tutto in parallelo
     const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
-    const solBal = await conn.getBalance(provider.publicKey);
+    const [solBal, videosRes, repostsRes] = await Promise.all([
+        conn.getBalance(window._walletPubkey || provider.publicKey),
+        db.from('videos').select('id, creator, hp').eq('creator_wallet', addr).order('created_at', {ascending: false}).limit(10),
+        db.from('reposts').select('video_id, videos(creator, hp)').eq('reposter_wallet', addr).order('created_at', {ascending: false}).limit(10),
+    ]);
     const solFormatted = (solBal / window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(3);
-
-    // Carica video caricati
-    const {data: myVideos} = await db.from('videos').select('*').eq('creator_wallet', addr).order('created_at', {ascending: false});
-
-    // Carica repost
-    const {data: myReposts} = await db.from('reposts').select('*, videos(creator, src, hp)').eq('reposter_wallet', addr).order('created_at', {ascending: false});
+    const myVideos = videosRes.data;
+    const myReposts = repostsRes.data;
 
     section.innerHTML = `
         <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-900 rounded-xl">
