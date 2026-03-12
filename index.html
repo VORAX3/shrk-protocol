@@ -419,7 +419,6 @@ window.loadFeed = async () => {
                 dna:     v.dna_hash,
                 hp:      v.hp,
             }));
-            console.log('Feed caricato: '+feedData.length+' video');
             // Imposta HP del primo video
             currentHP = feedData[0].hp || MAX_HP;
         }
@@ -518,7 +517,6 @@ window.updateOraclePrice = async () => {
                 window.currentShrkPrice = parseFloat(pair.priceUsd) || 0.005;
             }
         } catch(e2) { console.warn('SHRK price fetch failed'); }
-        console.log('Oracle: SHRK=$'+window.currentShrkPrice?.toFixed(6)+' SOL=$'+window.solPriceUSD?.toFixed(2));
         updatePriceLabels();
     } catch(e) { console.warn('Oracle offline, fallback prices'); if(!window.solPriceUSD) window.solPriceUSD = 140; }
 };
@@ -555,7 +553,6 @@ window.checkShrkGate = async (provider) => {
             const ata  = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
             const bal  = await conn.getTokenAccountBalance(ata);
             const amt  = bal.value.uiAmount || 0;
-            console.log('SHRK balance (ATA):', amt);
             if(amt >= SHRK_GATE) return true;
             showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
             return false;
@@ -568,10 +565,8 @@ window.checkShrkGate = async (provider) => {
             provider.publicKey,
             { mint: mintPubkey }
         );
-        console.log('Token accounts found:', tokenAccounts.value.length);
         if(tokenAccounts.value.length > 0) {
             const amt = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
-            console.log('SHRK balance (parsed):', amt);
             if(amt >= SHRK_GATE) return true;
             showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
             return false;
@@ -777,7 +772,6 @@ async function checkVideoKill(vid) {
             const limboSol = lf?.total_sol||0;
             const repCount = lf?.reporter_count||reports;
             showToast('VIDEO CONDEMNED ⚖️ — '+(limboSol).toFixed(4)+' SOL → '+repCount+' reporters 🏆',true);
-            console.log('JUSTICE: '+(limboSol/repCount).toFixed(5)+' SOL per reporter. On-chain distribution TODO.');
             updateVisuals();
         }
     } catch(e){ console.warn('checkVideoKill error:', e); }
@@ -968,7 +962,6 @@ window.executeUploadProtocol = async () => {
         const CLOUDINARY_PRESET = 'shrk_videos'; // unsigned upload preset
 
         showToast('STEP 2/3: UPLOADING VIDEO... 🌐');
-        console.log('STEP 2: inizio upload Cloudinary');
 
         const formData = new FormData();
         formData.append('file', file);
@@ -982,15 +975,11 @@ window.executeUploadProtocol = async () => {
             'https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/video/upload',
             { method: 'POST', body: formData }
         );
-
-        console.log('STEP 2: upload status:', uploadRes.status);
         const uploadData = await uploadRes.json();
-        console.log('STEP 2: upload response:', uploadData);
 
         if(uploadData.error) throw new Error('Cloudinary: '+uploadData.error.message);
 
         const link = uploadData.secure_url;
-        console.log('Video URL:', link);
         showToast('VIDEO CARICATO! ✅');
 
         // STEP 3: Salva su Supabase
@@ -1319,7 +1308,7 @@ window.startProtocol = async () => {
     if(v&&feedData.length){
         v.src=feedData[0].src;
         v.load();
-        v.play().catch(e=>console.log('Autoplay:',e));
+        v.play().catch(()=>{});
         document.getElementById('creator-name').innerText=feedData[0].creator;
     }
     updateVisuals();
@@ -1351,7 +1340,7 @@ function handleSwipeDirection(dir){
     const cur=feedData[currentFeedIndex];
     // HP viene dal feed (già aggiornato da Supabase al caricamento)
     currentHP = cur.hp || MAX_HP;
-    v.src=cur.src; v.muted=muted; v.play().catch(e=>console.log(e));
+    v.src=cur.src; v.muted=muted; v.play().catch(()=>{})
     document.getElementById('creator-name').innerText=cur.creator;
     const ic=document.getElementById('audio-icon');
     if(ic) ic.className=muted?'fas fa-volume-mute text-lg text-gray-500':'fas fa-volume-up text-lg text-white animate-pulse';
@@ -1366,7 +1355,7 @@ function handleSwipeDirection(dir){
 window.addEventListener('load', async ()=>{
     if(window.solana?.isPhantom){
         try{ await window.solana.connect({onlyIfTrusted:true}); }
-        catch{ console.log('Waiting for manual connect'); }
+        catch{ }
     }
     await window.updateOraclePrice();
     updateVisuals();
