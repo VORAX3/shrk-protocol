@@ -450,7 +450,6 @@ window.updateOraclePrice = async () => {
         } catch(e2) { console.warn('SHRK price fetch failed'); }
         console.log('Oracle: SHRK=$'+window.currentShrkPrice?.toFixed(6)+' SOL=$'+window.solPriceUSD?.toFixed(2));
         updatePriceLabels();
-        if(true) {
     } catch(e) { console.warn('Oracle offline, fallback prices'); if(!window.solPriceUSD) window.solPriceUSD = 140; }
 };
 window.solPriceUSD = 140; // fallback iniziale
