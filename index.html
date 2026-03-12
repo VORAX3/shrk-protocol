@@ -793,7 +793,20 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
-    if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌', true);
+    if(!provider) return showToast('PHANTOM NOT FOUND! 🛑', true);
+    // Connect wallet if not connected
+    if(!provider.publicKey) {
+        try {
+            await provider.connect();
+            window._walletConnected = true;
+            window._walletPubkey = provider.publicKey;
+            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            document.getElementById('wallet-text').innerText = provider.publicKey.toString().slice(0,4)+'...'+provider.publicKey.toString().slice(-4);
+            showToast('WALLET CONNECTED! 🦈');
+        } catch(e) {
+            return showToast('CONNECTION REJECTED ❌', true);
+        }
+    }
     if(!await window.checkShrkGate(provider)) return;
     const vid  = currentVideo().id;
     const addr = provider.publicKey.toString();
@@ -803,7 +816,7 @@ window.shareContent = async () => {
             reposter_wallet: addr,
             original_creator_wallet: creatorWallet(),
         }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
-        showToast('REPOSTED! 🔁 You earn 10% from every interaction on your repost 🦈');
+        showToast('REPOSTED! 🔁 You earn 10% from every interaction 🦈');
     } catch(e) {
         showToast('REPOST FAILED ❌', true);
     }
