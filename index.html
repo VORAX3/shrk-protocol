@@ -1164,53 +1164,58 @@ window.updateInteractionUI = () => {
     if(icon){icon.className=liked?'fas fa-anchor text-2xl text-blue-500':'fas fa-anchor text-2xl text-white transition-colors duration-300';icon.style.textShadow=liked?'0 0 15px rgba(59,130,246,0.8)':'none';}
 };
 window.loadProfile = async () => {
-    const provider = window.solana || window.phantom?.solana;
     const section = document.getElementById('profile-section');
-    const pubkey = window._walletPubkey || provider?.publicKey;
+    const pubkey = window._walletPubkey;
     if(!pubkey) {
         section.innerHTML = '<p class="text-[9px] text-zinc-500 text-center py-4">Connect your wallet to view your profile</p>';
         return;
     }
     const addr = pubkey.toString();
     const short = addr.slice(0,4)+'...'+addr.slice(-4);
+    // Mostra subito layout base
+    section.innerHTML = `
+        <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-900 rounded-xl">
+            <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center"><i class="fas fa-user text-white"></i></div>
+            <div>
+                <p class="text-white font-bold text-xs">${short}</p>
+                <p id="profile-sol" class="text-zinc-400 text-[9px]">Loading...</p>
+            </div>
+        </div>
+        <div id="profile-videos"><p class="text-[9px] text-zinc-500">Loading videos...</p></div>
+        <div id="profile-reposts" class="mt-3"><p class="text-[9px] text-zinc-500">Loading reposts...</p></div>
+    `;
+    const provider = window.solana || window.phantom?.solana;
+    const short = addr.slice(0,4)+'...'+addr.slice(-4);
 
     // Carica tutto in parallelo
     const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
     const [solBal, videosRes, repostsRes] = await Promise.all([
-        conn.getBalance(window._walletPubkey || provider.publicKey),
+        conn.getBalance(pubkey),
         db.from('videos').select('id, creator, hp').eq('creator_wallet', addr).order('created_at', {ascending: false}).limit(10),
         db.from('reposts').select('video_id, videos(creator, hp)').eq('reposter_wallet', addr).order('created_at', {ascending: false}).limit(10),
     ]);
     const solFormatted = (solBal / window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(3);
     const myVideos = videosRes.data;
     const myReposts = repostsRes.data;
+    document.getElementById('profile-sol').innerText = solFormatted + ' SOL';
 
-    section.innerHTML = `
-        <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-900 rounded-xl">
-            <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center"><i class="fas fa-user text-white"></i></div>
-            <div>
-                <p class="text-white font-bold text-xs">${short}</p>
-                <p class="text-zinc-400 text-[9px]">${solFormatted} SOL</p>
+    document.getElementById('profile-videos').innerHTML = `
+        <p class="text-[9px] text-zinc-500 uppercase font-bold mb-2">My Videos (${myVideos?.length || 0})</p>
+        ${myVideos?.length ? myVideos.map(v => `
+            <div class="flex justify-between items-center py-2 border-b border-zinc-800">
+                <span class="text-[9px] text-zinc-300">${v.creator}</span>
+                <span class="text-[9px] font-bold ${v.hp > 30000 ? 'text-blue-400' : v.hp > 10000 ? 'text-yellow-400' : 'text-red-400'}">${Math.round(v.hp).toLocaleString()} HP</span>
             </div>
-        </div>
-        <div class="mb-4">
-            <p class="text-[9px] text-zinc-500 uppercase font-bold mb-2">My Videos (${myVideos?.length || 0})</p>
-            ${myVideos?.length ? myVideos.map(v => `
-                <div class="flex justify-between items-center py-2 border-b border-zinc-800">
-                    <span class="text-[9px] text-zinc-300">${v.creator}</span>
-                    <span class="text-[9px] font-bold ${v.hp > 30000 ? 'text-blue-400' : v.hp > 10000 ? 'text-yellow-400' : 'text-red-400'}">${Math.round(v.hp).toLocaleString()} HP</span>
-                </div>
-            `).join('') : '<p class="text-[9px] text-zinc-600 py-2">No videos uploaded yet</p>'}
-        </div>
-        <div>
-            <p class="text-[9px] text-zinc-500 uppercase font-bold mb-2">My Reposts (${myReposts?.length || 0})</p>
-            ${myReposts?.length ? myReposts.map(r => `
-                <div class="flex justify-between items-center py-2 border-b border-zinc-800">
-                    <span class="text-[9px] text-zinc-300">${r.videos?.creator || 'Unknown'}</span>
-                    <span class="text-[9px] font-bold ${(r.videos?.hp||0) > 30000 ? 'text-blue-400' : (r.videos?.hp||0) > 10000 ? 'text-yellow-400' : 'text-red-400'}">${Math.round(r.videos?.hp||0).toLocaleString()} HP</span>
-                </div>
-            `).join('') : '<p class="text-[9px] text-zinc-600 py-2">No reposts yet</p>'}
-        </div>
+        `).join('') : '<p class="text-[9px] text-zinc-600 py-2">No videos uploaded yet</p>'}
+    `;
+    document.getElementById('profile-reposts').innerHTML = `
+        <p class="text-[9px] text-zinc-500 uppercase font-bold mb-2">My Reposts (${myReposts?.length || 0})</p>
+        ${myReposts?.length ? myReposts.map(r => `
+            <div class="flex justify-between items-center py-2 border-b border-zinc-800">
+                <span class="text-[9px] text-zinc-300">${r.videos?.creator || 'Unknown'}</span>
+                <span class="text-[9px] font-bold ${(r.videos?.hp||0) > 30000 ? 'text-blue-400' : (r.videos?.hp||0) > 10000 ? 'text-yellow-400' : 'text-red-400'}">${Math.round(r.videos?.hp||0).toLocaleString()} HP</span>
+            </div>
+        `).join('') : '<p class="text-[9px] text-zinc-600 py-2">No reposts yet</p>'}
     `;
 };
 
