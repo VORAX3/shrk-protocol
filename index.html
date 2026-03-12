@@ -265,7 +265,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // ==============================================
 // CONFIGURAZIONE GLOBALE
 // ==============================================
-const SHRK_MINT      = 'AMwhZQdgyRHpqYD7rA5z1quMNhHdYQhrwVAXpqB3tcBs';
+const SHRK_MINT      = '9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY';
 const PLATFORM_WALLET = '7j7KEbQ9Qm9rZJGN8hD3TGowZmta8eFwmZEBVmpqvnoD';
 const JUSTICE_WALLET  = 'ChL2ki6M2rdbUUhGtZ2frNhuPyNcTTcnK6WA33whFHEd';
 const RPC_URL         = 'https://mainnet.helius-rpc.com/?api-key=fe9e11d1-3603-4041-a552-fb7a9518d61c';
@@ -491,7 +491,7 @@ window.checkShrkGate = async (provider) => {
             console.warn('ATA method failed, trying token accounts...', ataErr);
         }
         // Metodo 2: cerca tutti i token account del wallet
-        const mintPubkey = new window.solanaWeb3.PublicKey('AMwhZQdgyRHpqYD7rA5z1quMNhHdYQhrwVAXpqB3tcBs');
+        const mintPubkey = new window.solanaWeb3.PublicKey('9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY');
         const tokenAccounts = await conn.getParsedTokenAccountsByOwner(
             provider.publicKey,
             { mint: mintPubkey }
