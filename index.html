@@ -155,12 +155,20 @@
     <!-- DEV MENU -->
     <div id="dev-menu" class="fixed inset-0 bg-zinc-950 z-[200] hidden flex-col p-6 overflow-y-auto">
         <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
-            <div><h2 class="text-xl font-black text-blue-600 tracking-tighter">VORAX PROTOCOL</h2><p class="text-[8px] text-zinc-500 font-mono">CORE SETTINGS V1.1</p></div>
+            <div><h2 class="text-xl font-black text-blue-600 tracking-tighter">VORAX PROTOCOL</h2><p class="text-[8px] text-zinc-500 font-mono">MENU</p></div>
             <button onclick="toggleDevMenu()" class="w-12 h-12 flex items-center justify-center bg-zinc-900 rounded-full text-2xl">&times;</button>
         </div>
+        <!-- PROFILE -->
+        <div class="mb-6 p-5 border border-purple-500/30 rounded-2xl bg-purple-900/10">
+            <h3 class="text-[10px] font-black mb-4 text-purple-400 tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-user"></i> My Profile</h3>
+            <div id="profile-section">
+                <p class="text-[9px] text-zinc-500 text-center py-4">Connect your wallet to view your profile</p>
+            </div>
+        </div>
+
         <!-- UPLOAD -->
         <div class="mb-6 p-5 border border-blue-500/30 rounded-2xl bg-blue-900/10">
-            <h3 class="text-[10px] font-black mb-4 text-blue-400 tracking-[0.2em] uppercase">Creator Dashboard</h3>
+            <h3 class="text-[10px] font-black mb-4 text-blue-400 tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-cloud-upload-alt"></i> Upload Video</h3>
             <div class="space-y-4">
                 <div class="relative w-full h-24 border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center bg-black hover:border-blue-500 transition cursor-pointer">
                     <input type="file" id="new-video-file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer">
@@ -1153,6 +1161,56 @@ window.updateInteractionUI = () => {
     const icon=document.getElementById('like-icon');
     if(icon){icon.className=liked?'fas fa-anchor text-2xl text-blue-500':'fas fa-anchor text-2xl text-white transition-colors duration-300';icon.style.textShadow=liked?'0 0 15px rgba(59,130,246,0.8)':'none';}
 };
+window.loadProfile = async () => {
+    const provider = window.solana || window.phantom?.solana;
+    const section = document.getElementById('profile-section');
+    if(!provider?.isConnected || !provider?.publicKey) {
+        section.innerHTML = '<p class="text-[9px] text-zinc-500 text-center py-4">Connect your wallet to view your profile</p>';
+        return;
+    }
+    const addr = provider.publicKey.toString();
+    const short = addr.slice(0,4)+'...'+addr.slice(-4);
+
+    // Carica SOL balance
+    const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
+    const solBal = await conn.getBalance(provider.publicKey);
+    const solFormatted = (solBal / window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(3);
+
+    // Carica video caricati
+    const {data: myVideos} = await db.from('videos').select('*').eq('creator_wallet', addr).order('created_at', {ascending: false});
+
+    // Carica repost
+    const {data: myReposts} = await db.from('reposts').select('*, videos(creator, src, hp)').eq('reposter_wallet', addr).order('created_at', {ascending: false});
+
+    section.innerHTML = `
+        <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-900 rounded-xl">
+            <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center"><i class="fas fa-user text-white"></i></div>
+            <div>
+                <p class="text-white font-bold text-xs">${short}</p>
+                <p class="text-zinc-400 text-[9px]">${solFormatted} SOL</p>
+            </div>
+        </div>
+        <div class="mb-4">
+            <p class="text-[9px] text-zinc-500 uppercase font-bold mb-2">My Videos (${myVideos?.length || 0})</p>
+            ${myVideos?.length ? myVideos.map(v => `
+                <div class="flex justify-between items-center py-2 border-b border-zinc-800">
+                    <span class="text-[9px] text-zinc-300">${v.creator}</span>
+                    <span class="text-[9px] font-bold ${v.hp > 30000 ? 'text-blue-400' : v.hp > 10000 ? 'text-yellow-400' : 'text-red-400'}">${Math.round(v.hp).toLocaleString()} HP</span>
+                </div>
+            `).join('') : '<p class="text-[9px] text-zinc-600 py-2">No videos uploaded yet</p>'}
+        </div>
+        <div>
+            <p class="text-[9px] text-zinc-500 uppercase font-bold mb-2">My Reposts (${myReposts?.length || 0})</p>
+            ${myReposts?.length ? myReposts.map(r => `
+                <div class="flex justify-between items-center py-2 border-b border-zinc-800">
+                    <span class="text-[9px] text-zinc-300">${r.videos?.creator || 'Unknown'}</span>
+                    <span class="text-[9px] font-bold ${(r.videos?.hp||0) > 30000 ? 'text-blue-400' : (r.videos?.hp||0) > 10000 ? 'text-yellow-400' : 'text-red-400'}">${Math.round(r.videos?.hp||0).toLocaleString()} HP</span>
+                </div>
+            `).join('') : '<p class="text-[9px] text-zinc-600 py-2">No reposts yet</p>'}
+        </div>
+    `;
+};
+
 window.toggleDevMenu = () => {
     const m=document.getElementById('dev-menu');
     if(m.classList.contains('hidden')){
