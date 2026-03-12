@@ -435,18 +435,22 @@ window.showToast = (msg, isError=false) => {
 // ==============================================
 window.updateOraclePrice = async () => {
     try {
-        const res  = await fetch('https://api.dexscreener.com/latest/dex/pairs/solana/8p6p2id8t8yh6f7ujmpxxqy2wz3zndkuhz1zsqzvp4aq');
-        const data = await res.json();
-        if(data.pairs?.[0]) {
-            const pair = data.pairs[0];
-            window.currentShrkPrice = parseFloat(pair.priceUsd) || 0.005;  // prezzo SHRK in USD
-            if(pair.priceNative && parseFloat(pair.priceNative) > 0) {
-                // priceNative = SHRK/SOL, quindi SOL = SHRK_USD / SHRK_SOL
-                window.solPriceUSD = window.currentShrkPrice / parseFloat(pair.priceNative);
+        // SOL price da CoinGecko (affidabile, no CORS)
+        const solRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const solData = await solRes.json();
+        if(solData?.solana?.usd) window.solPriceUSD = solData.solana.usd;
+        // SHRK price da DexScreener
+        try {
+            const res  = await fetch('https://api.dexscreener.com/latest/dex/pairs/solana/8p6p2id8t8yh6f7ujmpxxqy2wz3zndkuhz1zsqzvp4aq');
+            const data = await res.json();
+            if(data.pairs?.[0]) {
+                const pair = data.pairs[0];
+                window.currentShrkPrice = parseFloat(pair.priceUsd) || 0.005;
             }
-            console.log('Oracle: SHRK=$'+window.currentShrkPrice.toFixed(6)+' SOL=$'+window.solPriceUSD.toFixed(2));
-            updatePriceLabels();
-        }
+        } catch(e2) { console.warn('SHRK price fetch failed'); }
+        console.log('Oracle: SHRK=$'+window.currentShrkPrice?.toFixed(6)+' SOL=$'+window.solPriceUSD?.toFixed(2));
+        updatePriceLabels();
+        if(true) {
     } catch(e) { console.warn('Oracle offline, fallback prices'); if(!window.solPriceUSD) window.solPriceUSD = 140; }
 };
 window.solPriceUSD = 140; // fallback iniziale
