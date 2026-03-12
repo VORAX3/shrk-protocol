@@ -96,7 +96,7 @@
             <i class="fas fa-comment-dots text-2xl text-white"></i>
             <span id="comment-count" class="text-[9px] font-bold mt-0.5">342</span>
         </button>
-        <!-- EAT: $0.02 — 30% creator / 70% platform -->
+        <!-- EAT: $0.02 -->
         <div class="flex flex-col items-center">
             <button onclick="voraxBite()" class="w-9 h-9 rounded-full bg-red-600 border border-red-400 flex flex-col items-center justify-center active:scale-90 transition shadow-[0_0_15px_rgba(220,38,38,0.5)]">
                 <i class="fas fa-skull-crossbones text-white text-base"></i>
@@ -130,7 +130,7 @@
         <div class="flex items-center gap-2 mt-2 opacity-70 w-2/3 pointer-events-auto" onclick="toggleMute()">
             <i id="audio-icon" class="fas fa-volume-up text-sm"></i>
             <div class="marquee-container text-[9px] font-mono text-blue-400 uppercase tracking-tighter">
-                <span class="marquee-text">SHRK Protocol • Boost $0.29: 70% Creator 15% Platform 15% Justice • Eat $0.02: 30% Creator 70% Platform • Report $0.09: 100% Limbo Fund • Revive $2.99: 100% Platform in $SHRK • </span>
+                <span class="marquee-text">SHRK Protocol • Boost $0.29 • Eat $0.02 • Report $0.09 • Revive $2.99 • Platform in $SHRK • </span>
             </div>
         </div>
     </div>
@@ -189,7 +189,7 @@
             <p class="text-[9px] text-emerald-500 font-bold uppercase mb-3">SOL Accumulated</p>
             <div class="text-[8px] text-zinc-600 space-y-1 mb-4">
                 <div class="flex justify-between"><span>From Boost (70%)</span><span id="treasure-boost" class="text-emerald-400">0.00000 SOL</span></div>
-                <div class="flex justify-between"><span>From Eat (30%)</span><span id="treasure-eat" class="text-red-400">0.00000 SOL</span></div>
+                <div class="flex justify-between"><span>From Eat</span><span id="treasure-eat" class="text-red-400">0.00000 SOL</span></div>
             </div>
             <button id="claim-btn-treasure" onclick="claimCreatorFunds()" disabled class="w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5">Claim Locked</button>
             <p id="claim-timer-display" class="text-center text-[8px] text-zinc-600 mt-3 uppercase font-mono">Analyzing...</p>
@@ -214,18 +214,16 @@
         </div>
     </div>
 
-    <!-- EAT CONFIRM: 30% creator / 70% platform -->
+    <!-- EAT CONFIRM -->
     <div id="eat-confirm-overlay" class="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-md hidden p-6">
         <div class="w-full max-w-xs bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 text-center relative overflow-hidden">
             <div class="absolute -top-10 -left-10 w-32 h-32 bg-red-600/10 rounded-full blur-3xl"></div>
             <div class="relative z-10">
                 <i class="fas fa-skull text-red-600 text-5xl animate-pulse mb-4 block"></i>
                 <h2 class="text-2xl font-black text-white mb-1 uppercase">Ready to Bite?</h2>
-                <p class="text-zinc-500 text-[9px] mb-4 uppercase font-mono">Target: <span class="text-red-500 font-bold">-200 HP</span></p>
-                <div class="bg-red-600/5 rounded-2xl p-4 mb-6 border border-red-600/20 text-left space-y-2">
-                    <p class="text-[8px] text-zinc-500 uppercase text-center mb-2">Cost $0.02 split</p>
-                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400">Creator</span><span class="text-white font-bold">30%</span></div>
-                    <div class="flex justify-between text-[9px]"><span class="text-zinc-400">Platform</span><span class="text-white font-bold">70%</span></div>
+                <div class="my-6">
+                    <p class="text-red-500 font-black text-4xl text-center">-200 HP</p>
+                    <p class="text-zinc-500 text-[9px] uppercase font-mono text-center mt-2">Cost $0.02</p>
                 </div>
                 <button onclick="confirmPredatorEat()" class="w-full py-4 bg-red-600 rounded-xl text-xs font-black text-white uppercase tracking-[0.2em] active:scale-95 transition mb-2">Chomp!</button>
                 <button onclick="hideEatModal()" class="w-full py-3 text-[10px] font-bold text-zinc-600 uppercase">Aborting Mission</button>
@@ -567,7 +565,7 @@ window.fanBoost = async () => {
 };
 
 // ==============================================
-// EAT — $0.02 → 30% creator / 70% platform
+// EAT — $0.02
 // ==============================================
 window.voraxBite = async () => {
     const provider = window.solana || window.phantom?.solana;
