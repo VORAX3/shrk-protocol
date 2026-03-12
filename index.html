@@ -543,7 +543,7 @@ window.fanBoost = async () => {
         const toPlatform = Math.floor(total*0.15);
         const toJustice  = total - toCreator - toPlatform;
 
-        showToast('BOOSTING: '+(0.29/window.solPriceUSD).toFixed(5)+' SOL (70/15/15) 🚀');
+        showToast('BOOST ⚡ '+(0.29/window.solPriceUSD).toFixed(5)+' SOL');
         const tx = await buildSplitTx(provider, conn, [
             {to:new window.solanaWeb3.PublicKey(creatorWallet()), lamports:toCreator},
             {to:new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports:toPlatform},
@@ -557,7 +557,7 @@ window.fanBoost = async () => {
         await window.saveInteraction(currentVideo().id, provider.publicKey.toString(), 'boost', signature, toCreator);
 
         updateVisuals();
-        showToast('BOOST! +10,000 HP ⚡ Creator earned '+(toCreator/window.solanaWeb3.LAMPORTS_PER_SOL).toFixed(5)+' SOL');
+        showToast('BOOSTED! +10,000 HP ⚡');
         if(window.audioBoost) window.audioBoost.play();
     } catch(e) {
         showToast(e.message?.includes('User rejected')?'BOOST CANCELED':'ERROR: Check SOL balance',true);
@@ -591,7 +591,7 @@ window.confirmPredatorEat = async () => {
         const toCreator  = Math.floor(total*0.30);
         const toPlatform = total - toCreator;
 
-        showToast('CHOMP: '+(0.02/window.solPriceUSD).toFixed(5)+' SOL (30/70) 🩸');
+        showToast('EAT 💀 '+(0.02/window.solPriceUSD).toFixed(5)+' SOL');
         const tx = await buildSplitTx(provider, conn, [
             {to:new window.solanaWeb3.PublicKey(creatorWallet()), lamports:toCreator},
             {to:new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports:toPlatform},
@@ -648,7 +648,7 @@ window.confirmReportAttack = async () => {
     try {
         const conn  = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
         const total = usdToLamports(0.09);
-        showToast('JUDGMENT: '+(0.09/window.solPriceUSD).toFixed(5)+' SOL → Limbo ⚖️');
+        showToast('REPORT ⚖️ '+(0.09/window.solPriceUSD).toFixed(5)+' SOL');
         const tx = await buildSplitTx(provider, conn, [{to:new window.solanaWeb3.PublicKey(JUSTICE_WALLET),lamports:total}]);
         const {signature} = await provider.signAndSendTransaction(tx);
         await conn.confirmTransaction(signature,'confirmed');
