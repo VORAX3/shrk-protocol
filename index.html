@@ -824,14 +824,19 @@ window.giveLike = async () => {
     const vid  = currentVideo().id;
     const addr = window.solana?.publicKey?.toString()||'anon';
     const already = await window.hasInteracted(vid, addr, 'like');
-    if(already) return showToast("ALREADY LIKED! ⚓💙");
+    if(already){
+        const icon = document.getElementById('like-icon');
+        if(icon){icon.className='fas fa-anchor text-2xl text-blue-500';icon.style.textShadow='0 0 15px rgba(59,130,246,0.8)';}
+        return showToast('ALREADY LIKED! ⚓💙');
+    }
     const icon = document.getElementById('like-icon');
     if(icon){icon.className='fas fa-anchor text-2xl text-blue-500';icon.style.textShadow='0 0 15px rgba(59,130,246,0.8)';}
+    localStorage.setItem('lkd_'+addr+'_'+vid, 'true');
     currentHP += 10;
     await window.saveHP(vid, currentHP);
     await window.saveInteraction(vid, addr, 'like');
     updateVisuals();
-    showToast('Segnale Apprezzato! +10 HP ⚓💙');
+    showToast('SIGNAL APPRECIATED! +10 HP ⚓💙');
 };
 
 // ==============================================
