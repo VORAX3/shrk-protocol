@@ -271,6 +271,7 @@ const SHRK_GATE       = 5000;
 const MAX_HP          = 90000;
 const DECAY_PER_SEC   = 10000 / 86400;
 const REPORT_THRESHOLD = 0.75;
+const UPLOAD_FEE_ENABLED = false; // → set to true after 10,000 videos
 
 // Prezzi (aggiornati dall'oracle)
 window.solPriceUSD      = 150;
@@ -785,36 +786,20 @@ window.shareContent = async () => {
     const addr = provider.publicKey.toString();
 
     try {
-        // Pagamento repost split: 40% creator / 10% reposter / 40% platform / 10% justice
-        const REPOST_COST_USD = 0.01; // $0.01 per repost
-        const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
-        const total = usdToLamports(REPOST_COST_USD);
-        const toCreator  = Math.floor(total * 0.40);
-        const toReposter = Math.floor(total * 0.10);
-        const toPlatform = Math.floor(total * 0.40);
-        const toJustice  = total - toCreator - toReposter - toPlatform;
-
-        showToast('REPOST 🔁 '+(REPOST_COST_USD/window.solPriceUSD*1000).toFixed(5)+' SOL');
-
-        const tx = await buildSplitTx(provider, conn, [
-            {to: new window.solanaWeb3.PublicKey(creatorWallet()),  lamports: toCreator},
-            {to: new window.solanaWeb3.PublicKey(addr),             lamports: toReposter},
-            {to: new window.solanaWeb3.PublicKey(PLATFORM_WALLET),  lamports: toPlatform},
-            {to: new window.solanaWeb3.PublicKey(JUSTICE_WALLET),   lamports: toJustice},
-        ]);
-        const {signature} = await provider.signAndSendTransaction(tx);
-        await conn.confirmTransaction(signature, 'confirmed');
-
+        // Repost è gratuito — il 10% arriva dalle future interazioni sul repost
+        // Save repost — inherits current HP of original video
+        const currentHp = currentVideo().hp || currentHP;
         await db.from('reposts').upsert({
             video_id: vid,
             reposter_wallet: addr,
             original_creator_wallet: creatorWallet(),
         }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
 
-        showToast('REPOSTED! 🔁 You earn 10% from interactions on your repost 🦈');
+        showToast('REPOSTED! 🔁 You earn 10% from every interaction on your repost 🦈');
+        console.log('Repost saved — inherited HP:', currentHp);
     } catch(e) {
         console.error('Repost error:', e);
-        showToast(e.message?.includes('User rejected') ? 'REPOST CANCELED' : 'ERROR: Check SOL balance', true);
+        showToast('ERROR: Repost failed', true);
     }
 };
 
@@ -875,22 +860,26 @@ window.executeUploadProtocol = async () => {
     if(!file||!creator||!ca||!provider?.publicKey) return showToast('Dati mancanti ⚠️',true);
 
     try {
-        // STEP 1: Pagamento fee piattaforma $0.01
-        showToast('STEP 1/3: PLATFORM FEE... 🦈');
+        // STEP 1: Platform fee (only when UPLOAD_FEE_ENABLED)
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const feeLamports = usdToLamports(0.01);
-        const feeTx = new window.solanaWeb3.Transaction().add(
-            window.solanaWeb3.SystemProgram.transfer({
-                fromPubkey: provider.publicKey,
-                toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
-                lamports:   feeLamports,
-            })
-        );
-        const {blockhash} = await conn.getLatestBlockhash();
-        feeTx.recentBlockhash=blockhash; feeTx.feePayer=provider.publicKey;
-        const {signature:feeSig} = await provider.signAndSendTransaction(feeTx);
-        await conn.confirmTransaction(feeSig,'confirmed');
-        showToast('FEE PAGATA ✅');
+        if(UPLOAD_FEE_ENABLED) {
+            showToast('STEP 1/3: PLATFORM FEE... 🦈');
+            const feeLamports = usdToLamports(0.01);
+            const feeTx = new window.solanaWeb3.Transaction().add(
+                window.solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: provider.publicKey,
+                    toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
+                    lamports:   feeLamports,
+                })
+            );
+            const {blockhash} = await conn.getLatestBlockhash();
+            feeTx.recentBlockhash=blockhash; feeTx.feePayer=provider.publicKey;
+            const {signature:feeSig} = await provider.signAndSendTransaction(feeTx);
+            await conn.confirmTransaction(feeSig,'confirmed');
+            showToast('FEE PAID ✅');
+        } else {
+            showToast('STEP 1/3: UPLOADING... 🦈');
+        }
 
         // STEP 2: Upload su Cloudinary (CDN veloce, gratuito fino a 25GB)
         // ⚠️ SOSTITUISCI 'YOUR_CLOUD_NAME' con il tuo cloud name Cloudinary
