@@ -778,10 +778,6 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
-    if(!provider?.isConnected) {
-        await window.connectWallet();
-        return;
-    }
     const ok = await window.checkShrkGate(provider);
     if(!ok) return;
 
@@ -789,7 +785,21 @@ window.shareContent = async () => {
     const addr = provider.publicKey.toString();
 
     try {
-        // Repost è gratuito — il 10% arriva dalle future interazioni sul repost
+        // 1 lamport simbolico — forza apertura Phantom per verificare identità
+        const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
+        const tx = new window.solanaWeb3.Transaction().add(
+            window.solanaWeb3.SystemProgram.transfer({
+                fromPubkey: provider.publicKey,
+                toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
+                lamports:   1,
+            })
+        );
+        const {blockhash} = await conn.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.feePayer = provider.publicKey;
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature, 'confirmed');
+
         // Save repost — inherits current HP of original video
         const currentHp = currentVideo().hp || currentHP;
         await db.from('reposts').upsert({
@@ -799,10 +809,9 @@ window.shareContent = async () => {
         }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
 
         showToast('REPOSTED! 🔁 You earn 10% from every interaction on your repost 🦈');
-        console.log('Repost saved — inherited HP:', currentHp);
     } catch(e) {
         console.error('Repost error:', e);
-        showToast('ERROR: Repost failed', true);
+        showToast(e.message?.includes('User rejected') ? 'REPOST CANCELED' : 'ERROR: Repost failed', true);
     }
 };
 
