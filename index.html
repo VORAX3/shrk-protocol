@@ -794,24 +794,38 @@ window.giveLike = async () => {
 // REPOST (10% future interactions)
 // ==============================================
 window.shareContent = async () => {
-    let provider = window.solana || window.phantom?.solana;
+    const provider = window.solana || window.phantom?.solana;
     if(!provider) return showToast('PHANTOM NOT FOUND! 🛑', true);
+
+    // Step 1: force wallet open via connect()
     if(!provider.publicKey) {
         try {
-            const resp = await provider.connect();
-            window._walletConnected = true;
-            window._walletPubkey = resp.publicKey;
-            provider = window.solana || window.phantom?.solana;
-            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
-            document.getElementById('wallet-text').innerText = resp.publicKey.toString().slice(0,4)+'...'+resp.publicKey.toString().slice(-4);
-            showToast('WALLET CONNECTED! 🦈');
+            await provider.connect();
         } catch(e) {
             return showToast('CONNECTION REJECTED ❌', true);
         }
     }
+
+    // Step 2: sign a 0-lamport message to confirm identity (no SOL spent)
+    try {
+        const msg = new TextEncoder().encode('VORAX REPOST — ' + currentVideo().id);
+        await provider.signMessage(msg, 'utf8');
+    } catch(e) {
+        return showToast('SIGNATURE REJECTED ❌', true);
+    }
+
+    // Step 3: gate check
     if(!await window.checkShrkGate(provider)) return;
+
     const vid  = currentVideo().id;
     const addr = provider.publicKey.toString();
+
+    // Update wallet UI
+    window._walletConnected = true;
+    window._walletPubkey = provider.publicKey;
+    document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+    document.getElementById('wallet-text').innerText = addr.slice(0,4)+'...'+addr.slice(-4);
+
     try {
         await db.from('reposts').upsert({
             video_id: vid,
