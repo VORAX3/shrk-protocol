@@ -491,9 +491,10 @@ window.checkShrkGate = async (provider) => {
             console.warn('ATA method failed, trying token accounts...', ataErr);
         }
         // Metodo 2: cerca tutti i token account del wallet
+        const mintPubkey = new window.solanaWeb3.PublicKey('AMwhZQdgyRHpqYD7rA5z1quMNhHdYQhrwVAXpqB3tcBs');
         const tokenAccounts = await conn.getParsedTokenAccountsByOwner(
             provider.publicKey,
-            { mint: mint }
+            { mint: mintPubkey }
         );
         console.log('Token accounts found:', tokenAccounts.value.length);
         if(tokenAccounts.value.length > 0) {
