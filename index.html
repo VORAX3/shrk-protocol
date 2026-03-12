@@ -423,7 +423,7 @@ window.loadFeed = async () => {
             currentHP = feedData[0].hp || MAX_HP;
         }
     } catch(e) {
-        console.warn('Supabase offline, uso feed locale di fallback:', e);
+        console.warn('Supabase offline, using fallback feed:', e);
         feedData = [
             {id:'video_1',creator:'@CyberShark_Official',ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://vjs.zencdn.net/v/oceans.mp4',dna:null,hp:90000},
             {id:'video_2',creator:'@Crypto_Bunny',       ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://www.w3schools.com/html/mov_bbb.mp4',dna:null,hp:90000},
@@ -455,7 +455,7 @@ window.saveInteraction = async (videoId, wallet, action, txSignature='', lamport
             lamports,
         }, { onConflict: 'video_id,wallet,action', ignoreDuplicates: false });
     } catch(e) {
-        console.warn('saveInteraction fallback localStorage:', e);
+        
         localStorage.setItem(action+'_'+wallet+'_'+videoId, 'true');
     }
 };
@@ -863,7 +863,7 @@ window.executeUploadProtocol = async () => {
     const creator = document.getElementById('new-video-creator').value;
     const ca      = document.getElementById('new-video-ca').value;
     const provider = window.solana||window.phantom?.solana;
-    if(!file||!creator||!ca||!provider?.publicKey) return showToast('Dati mancanti ⚠️',true);
+    if(!file||!creator||!ca||!provider?.publicKey) return showToast('Missing data ⚠️', true);
 
     try {
         // STEP 1: Platform fee (only when UPLOAD_FEE_ENABLED)
@@ -941,7 +941,7 @@ window.executeUploadProtocol = async () => {
         console.error('Message:', e.message);
         console.error('Stack:', e.stack);
         console.error('Full error:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
-        showToast('ERRORE: '+(e.message||'Upload fallito'),true);
+        showToast('ERROR: '+(e.message||'Upload failed'), true);
     }
 };
 
@@ -1104,15 +1104,22 @@ window.connectWallet = async () => {
         try {
             const resp = await window.solana.connect();
             const pk   = resp.publicKey;
-            const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-            const bal  = await conn.getBalance(pk);
-            document.getElementById('wallet-text').innerText=(bal/1e9).toFixed(2)+' SOL | '+pk.toString().slice(0,4)+'...';
-            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
             window._walletConnected = true;
             window._walletPubkey = pk;
-            showToast('Synced with Solana 🦈');
-        } catch { showToast('CONNESSIONE FALLITA',true); }
-    } else { alert('Phantom Wallet non trovato! (Usa Chrome + estensione)'); }
+            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            document.getElementById('wallet-text').innerText = pk.toString().slice(0,4)+'...'+pk.toString().slice(-4);
+            showToast('WALLET CONNECTED! 🦈');
+            // Load balance async (non-blocking)
+            try {
+                const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+                const bal  = await conn.getBalance(pk);
+                document.getElementById('wallet-text').innerText=(bal/1e9).toFixed(3)+' SOL | '+pk.toString().slice(0,4)+'...';
+            } catch(balErr) { /* balance fetch failed, wallet still connected */ }
+        } catch(e) {
+            if(e.message?.includes('rejected') || e.code === 4001) showToast('CONNECTION REJECTED ❌', true);
+            else showToast('CONNECTION FAILED ❌', true);
+        }
+    } else { showToast('PHANTOM NOT FOUND! Install Chrome extension 🔌', true); }
 };
 
 // ==============================================
@@ -1233,7 +1240,7 @@ window.startProtocol = async () => {
     updateOraclePrice();
     const ph=document.getElementById('placeholder');
     if(ph) ph.style.opacity='0';
-    showToast('CARICAMENTO FEED... 🌐');
+    showToast('LOADING FEED... 🌐');
     await window.loadFeed();
     const v=document.getElementById('main-video');
     if(v&&feedData.length){
