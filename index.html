@@ -184,72 +184,43 @@
         </div>
         <!-- HOW IT WORKS -->
         <div class="mb-6 border border-zinc-700/50 rounded-2xl bg-zinc-900/20 overflow-hidden">
-            <button onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('.hiw-arrow').classList.toggle('rotate-180')" class="w-full p-5 flex items-center justify-between">
-                <h3 class="text-[10px] font-black text-white tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-book-open text-white"></i> How It Works</h3>
-                <i class="fas fa-chevron-down text-zinc-500 text-xs hiw-arrow transition-transform duration-300"></i>
+            <button onclick="document.getElementById('hiw-body').classList.toggle('hidden');document.getElementById('hiw-arrow').classList.toggle('rotate-180')" class="w-full p-5 flex items-center justify-between text-left">
+                <span class="text-[10px] font-black text-white tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-book-open"></i> How It Works</span>
+                <i id="hiw-arrow" class="fas fa-chevron-down text-zinc-500 text-xs transition-transform duration-300"></i>
             </button>
-            <div class="hidden px-5 pb-5">
-            
-            <!-- What is VORAX -->
-            <div class="mb-5">
-                <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
-                <p class="text-[9px] text-zinc-400 leading-relaxed">VORAX is a decentralized video platform on Solana. Every video has HP (Hit Points) that decay over time. The community decides what survives.</p>
-            </div>
-
-            <!-- Get Started -->
-            <div class="mb-5 p-3 bg-zinc-800/50 rounded-xl">
-                <p class="text-white font-black text-[9px] mb-2 uppercase tracking-widest">To Get Started</p>
-                <div class="flex items-center gap-2 mb-1"><i class="fas fa-check text-green-400 text-[9px]"></i><p class="text-[9px] text-zinc-300">Phantom Wallet installed</p></div>
-                <div class="flex items-center gap-2"><i class="fas fa-check text-green-400 text-[9px]"></i><p class="text-[9px] text-zinc-300">5,000 $SHRK in your wallet</p></div>
-            </div>
-
-            <!-- Actions -->
-            <p class="text-[9px] text-zinc-500 uppercase font-black tracking-widest mb-3">Actions</p>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <span class="text-lg">⚡</span>
-                    <div><p class="text-white text-[9px] font-black">BOOST — $0.29</p><p class="text-zinc-500 text-[8px]">+10,000 HP to the video. 70% goes to the creator.</p></div>
+            <div id="hiw-body" class="hidden px-5 pb-5">
+                <div class="mb-5">
+                    <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
+                    <p class="text-[9px] text-zinc-400 leading-relaxed">VORAX is a decentralized video platform on Solana. Every video has HP that decays over time. The community decides what survives.</p>
                 </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-lg">💀</span>
-                    <div><p class="text-white text-[9px] font-black">EAT — $0.02</p><p class="text-zinc-500 text-[8px]">-200 HP from the video. Attack content you dislike.</p></div>
+                <div class="mb-5 p-3 bg-zinc-800/50 rounded-xl">
+                    <p class="text-white font-black text-[9px] mb-2 uppercase tracking-widest">To Get Started</p>
+                    <div class="flex items-center gap-2 mb-1"><i class="fas fa-check text-green-400 text-[9px]"></i><p class="text-[9px] text-zinc-300">Phantom Wallet installed</p></div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check text-green-400 text-[9px]"></i><p class="text-[9px] text-zinc-300">5,000 $SHRK in your wallet</p></div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-lg">⚖️</span>
-                    <div><p class="text-white text-[9px] font-black">REPORT — $0.09</p><p class="text-zinc-500 text-[8px]">100% goes to Limbo Fund. If video is taken down you get a refund + reward.</p></div>
+                <p class="text-[9px] text-zinc-500 uppercase font-black tracking-widest mb-3">Actions</p>
+                <div class="space-y-3 mb-5">
+                    <div class="flex items-start gap-3"><span class="text-lg">⚡</span><div><p class="text-white text-[9px] font-black">BOOST — $0.29</p><p class="text-zinc-500 text-[8px]">+10,000 HP. 70% goes to the creator.</p></div></div>
+                    <div class="flex items-start gap-3"><span class="text-lg">💀</span><div><p class="text-white text-[9px] font-black">EAT — $0.02</p><p class="text-zinc-500 text-[8px]">-200 HP. Once per video.</p></div></div>
+                    <div class="flex items-start gap-3"><span class="text-lg">⚖️</span><div><p class="text-white text-[9px] font-black">REPORT — $0.09</p><p class="text-zinc-500 text-[8px]">100% Limbo Fund. Refund + reward if video is taken down. Once per video.</p></div></div>
+                    <div class="flex items-start gap-3"><span class="text-lg">🔁</span><div><p class="text-white text-[9px] font-black">REPOST — Free</p><p class="text-zinc-500 text-[8px]">Earn 10% from every interaction on your repost.</p></div></div>
+                    <div class="flex items-start gap-3"><span class="text-lg">💚</span><div><p class="text-white text-[9px] font-black">REVIVE — $2.99</p><p class="text-zinc-500 text-[8px]">Restore video to 90,000 HP. Paid in SOL.</p></div></div>
+                    <div class="flex items-start gap-3"><span class="text-lg">📤</span><div><p class="text-white text-[9px] font-black">UPLOAD — Free</p><p class="text-zinc-500 text-[8px]">Upload your video. Starts with 90,000 HP.</p></div></div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-lg">🔁</span>
-                    <div><p class="text-white text-[9px] font-black">REPOST — Free</p><p class="text-zinc-500 text-[8px]">Share a video. Earn 10% from every interaction on your repost.</p></div>
+                <div class="p-3 bg-zinc-800/50 rounded-xl mb-4">
+                    <p class="text-white font-black text-[9px] mb-2 uppercase tracking-widest">HP System</p>
+                    <p class="text-[9px] text-zinc-400 leading-relaxed">Every video starts with <span class="text-blue-400 font-bold">90,000 HP</span> and loses <span class="text-yellow-400 font-bold">10,000 HP/day</span>. At 0 HP the video goes dark.</p>
+                    <div class="flex gap-3 mt-2">
+                        <span class="text-[8px] text-blue-400 font-bold">● &gt;30k Healthy</span>
+                        <span class="text-[8px] text-yellow-400 font-bold">● 10-30k Fading</span>
+                        <span class="text-[8px] text-red-400 font-bold">● &lt;10k Critical</span>
+                    </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-lg">💚</span>
-                    <div><p class="text-white text-[9px] font-black">REVIVE — $2.99</p><p class="text-zinc-500 text-[8px]">Restore a video to 90,000 HP. Paid in $SHRK.</p></div>
+                <div class="p-3 bg-red-900/10 border border-red-500/20 rounded-xl">
+                    <p class="text-red-400 font-black text-[9px] mb-2 uppercase tracking-widest">⚖️ Justice System</p>
+                    <p class="text-[9px] text-zinc-400 leading-relaxed">If more than <span class="text-red-400 font-bold">75% of interactions</span> are reports, the video is taken down. Reporters get refund + reward.</p>
                 </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-lg">📤</span>
-                    <div><p class="text-white text-[9px] font-black">UPLOAD — Free</p><p class="text-zinc-500 text-[8px]">Upload your video. Starts with 90,000 HP.</p></div>
-                </div>
-            </div>
-
-            <!-- HP System -->
-            <div class="mt-5 p-3 bg-zinc-800/50 rounded-xl">
-                <p class="text-white font-black text-[9px] mb-2 uppercase tracking-widest">HP System</p>
-                <p class="text-[9px] text-zinc-400 leading-relaxed">Every video starts with <span class="text-blue-400 font-bold">90,000 HP</span> and loses <span class="text-yellow-400 font-bold">10,000 HP per day</span> automatically. When HP reaches 0, the video goes dark. Boost to keep it alive.</p>
-                <div class="flex gap-2 mt-2">
-                    <span class="text-[8px] text-blue-400 font-bold">● &gt;30k Healthy</span>
-                    <span class="text-[8px] text-yellow-400 font-bold">● 10-30k Fading</span>
-                    <span class="text-[8px] text-red-400 font-bold">● &lt;10k Critical</span>
-                </div>
-            </div>
-
-            <!-- Justice System -->
-            <div class="mt-4 p-3 bg-red-900/10 border border-red-500/20 rounded-xl">
-                <p class="text-red-400 font-black text-[9px] mb-2 uppercase tracking-widest">⚖️ Justice System</p>
-                <p class="text-[9px] text-zinc-400 leading-relaxed">If more than <span class="text-red-400 font-bold">75% of interactions</span> on a video are reports, the video is taken down. All reporters receive a refund + share of the Limbo Fund.</p>
-            </div>
-
-            <p class="text-[8px] text-zinc-600 text-center mt-4">vorax.zone • Powered by Solana & $SHRK</p>
+                <p class="text-[8px] text-zinc-600 text-center mt-4">vorax.zone • Powered by Solana & $SHRK</p>
             </div>
         </div>
 
