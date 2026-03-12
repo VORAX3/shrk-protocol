@@ -197,7 +197,33 @@
             <div class="text-2xl font-mono font-bold text-white"><span id="foundation-total-display">0.0000</span> <span class="text-[10px] text-blue-400">SOL</span></div>
             <p class="text-[8px] text-zinc-600 mt-1">Report: 100% Limbo per-video • Boost: 15% Justice share</p>
         </div>
-        <!-- HOW IT WORKS -->
+        <!-- JUSTICE HUNTERS LEADERBOARD -->
+        <div class="mb-6 p-5 border border-yellow-500/30 rounded-2xl bg-yellow-900/10">
+            <h3 class="text-[10px] font-black mb-1 text-yellow-400 tracking-[0.2em] uppercase">⚖️ Justice Hunters</h3>
+            <p class="text-[8px] text-zinc-500 mb-4">Top reporters this month · Resets every 30th · 1,000,000 $SHRK prize pool</p>
+            <div id="justice-leaderboard">
+                <p class="text-[9px] text-zinc-600 text-center py-2">Loading...</p>
+            </div>
+            <div class="mt-3 border-t border-zinc-800 pt-3">
+                <p class="text-[8px] text-zinc-600 text-center">🏆 Prize distribution (parimerito divide)</p>
+                <div class="grid grid-cols-5 gap-1 mt-2 text-center">
+                    <div class="text-[7px] text-yellow-400">1st<br>280k</div>
+                    <div class="text-[7px] text-zinc-300">2nd<br>200k</div>
+                    <div class="text-[7px] text-zinc-400">3rd<br>150k</div>
+                    <div class="text-[7px] text-zinc-500">4th<br>100k</div>
+                    <div class="text-[7px] text-zinc-600">5th<br>80k</div>
+                </div>
+                <div class="grid grid-cols-5 gap-1 mt-1 text-center">
+                    <div class="text-[7px] text-zinc-600">6th<br>60k</div>
+                    <div class="text-[7px] text-zinc-600">7th<br>50k</div>
+                    <div class="text-[7px] text-zinc-600">8th<br>40k</div>
+                    <div class="text-[7px] text-zinc-600">9th<br>25k</div>
+                    <div class="text-[7px] text-zinc-600">10th<br>15k</div>
+                </div>
+            </div>
+        </div>
+
+  <!-- HOW IT WORKS -->
         <div class="mb-6 p-5 border border-zinc-700/50 rounded-2xl bg-zinc-900/20">
             <h3 class="text-[10px] font-black mb-4 text-white tracking-[0.2em] uppercase">📖 How It Works</h3>
             <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
@@ -258,7 +284,33 @@
                 <button onclick="document.getElementById('upload-confirm-overlay').classList.add('hidden')" class="w-full py-3 text-[10px] font-bold text-zinc-600 uppercase">Cancel</button>
             </div>
         </div>
-        <!-- HOW IT WORKS -->
+        <!-- JUSTICE HUNTERS LEADERBOARD -->
+        <div class="mb-6 p-5 border border-yellow-500/30 rounded-2xl bg-yellow-900/10">
+            <h3 class="text-[10px] font-black mb-1 text-yellow-400 tracking-[0.2em] uppercase">⚖️ Justice Hunters</h3>
+            <p class="text-[8px] text-zinc-500 mb-4">Top reporters this month · Resets every 30th · 1,000,000 $SHRK prize pool</p>
+            <div id="justice-leaderboard">
+                <p class="text-[9px] text-zinc-600 text-center py-2">Loading...</p>
+            </div>
+            <div class="mt-3 border-t border-zinc-800 pt-3">
+                <p class="text-[8px] text-zinc-600 text-center">🏆 Prize distribution (parimerito divide)</p>
+                <div class="grid grid-cols-5 gap-1 mt-2 text-center">
+                    <div class="text-[7px] text-yellow-400">1st<br>280k</div>
+                    <div class="text-[7px] text-zinc-300">2nd<br>200k</div>
+                    <div class="text-[7px] text-zinc-400">3rd<br>150k</div>
+                    <div class="text-[7px] text-zinc-500">4th<br>100k</div>
+                    <div class="text-[7px] text-zinc-600">5th<br>80k</div>
+                </div>
+                <div class="grid grid-cols-5 gap-1 mt-1 text-center">
+                    <div class="text-[7px] text-zinc-600">6th<br>60k</div>
+                    <div class="text-[7px] text-zinc-600">7th<br>50k</div>
+                    <div class="text-[7px] text-zinc-600">8th<br>40k</div>
+                    <div class="text-[7px] text-zinc-600">9th<br>25k</div>
+                    <div class="text-[7px] text-zinc-600">10th<br>15k</div>
+                </div>
+            </div>
+        </div>
+
+  <!-- HOW IT WORKS -->
         <div class="mb-6 p-5 border border-zinc-700/50 rounded-2xl bg-zinc-900/20">
             <h3 class="text-[10px] font-black mb-5 text-white tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-book-open"></i> How It Works</h3>
             <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
@@ -995,7 +1047,58 @@ window.executeUploadProtocol = async () => {
     }
 };
 
+window.loadJusticeLeaderboard = async () => {
+    const el = document.getElementById('justice-leaderboard');
+    if(!el) return;
+    try {
+        const { data } = await db.from('justice_hunters')
+            .select('wallet, username, points')
+            .order('points', { ascending: false })
+            .limit(10);
+        if(!data || data.length === 0) {
+            el.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-2">No hunters yet — be the first ⚖️</p>';
+            return;
+        }
+        const prizes = [280000, 200000, 150000, 100000, 80000, 60000, 50000, 40000, 25000, 15000];
+        const medals = ['🥇','🥈','🥉','4','5','6','7','8','9','10'];
+        // Handle ties — cascade prize upward
+        let rows = data.map((h, i) => ({ ...h, rank: i + 1, prize: prizes[i] || 0 }));
+        // Find ties and redistribute
+        for(let i = 0; i < rows.length - 1; i++) {
+            if(rows[i].points === rows[i+1].points) {
+                // Find all tied at this rank
+                let tieEnd = i;
+                while(tieEnd + 1 < rows.length && rows[tieEnd+1].points === rows[i].points) tieEnd++;
+                const tieCount = tieEnd - i + 1;
+                // Sum prizes for all tied positions + skipped positions below
+                let totalPrize = 0;
+                for(let j = i; j <= Math.min(tieEnd + (tieCount - 1), prizes.length - 1); j++) {
+                    totalPrize += prizes[j] || 0;
+                }
+                const sharedPrize = Math.floor(totalPrize / tieCount);
+                for(let j = i; j <= tieEnd; j++) rows[j].prize = sharedPrize;
+                i = tieEnd;
+            }
+        }
+        el.innerHTML = rows.map((h, i) => `
+            <div class="flex items-center justify-between py-1 border-b border-zinc-800/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] w-4">${medals[i]||i+1}</span>
+                    <span class="text-[9px] text-white">${h.username||h.wallet.slice(0,6)+'...'}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] text-yellow-400 font-black">${h.points} pts</span>
+                    <span class="text-[7px] text-zinc-600 ml-1">${h.prize.toLocaleString()} SHRK</span>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        el.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-2">Could not load leaderboard</p>';
+    }
+};
+
 window.addEventListener('load',()=>{
+    window.loadJusticeLeaderboard();
     const btn=document.getElementById('btn-confirm-upload');
     if(btn) btn.onclick=window.executeUploadProtocol;
 });
