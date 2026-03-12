@@ -177,7 +177,8 @@
                 </div>
                 <input type="text" id="new-video-creator" placeholder="@Username" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
                 <input type="text" id="new-video-ca" placeholder="Solana Creator Wallet" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
-                <p class="text-[9px] text-zinc-500 text-center uppercase">Fee: $0.01 (<span id="upload-sol-cost" class="text-blue-400">--</span> SOL) → 100% Platform</p>
+                <p class="text-[9px] text-zinc-500 text-center uppercase" id="upload-fee-line"></p>
+                <span id="upload-sol-cost" class="hidden"></span>
                 <button onclick="publishRealContent()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase text-xs tracking-widest">Publish</button>
             </div>
         </div>
@@ -197,7 +198,7 @@
             <p class="text-[9px] text-emerald-500 font-bold uppercase mb-3">SOL Accumulated</p>
             <div class="text-[8px] text-zinc-600 space-y-1 mb-4">
                 <div class="flex justify-between"><span>From Boost (70%)</span><span id="treasure-boost" class="text-emerald-400">0.00000 SOL</span></div>
-                <div class="flex justify-between"><span>From Eat</span><span id="treasure-eat" class="text-red-400">0.00000 SOL</span></div>
+                <div class="flex justify-between"><span>From Eat (30%)</span><span id="treasure-eat" class="text-red-400">0.00000 SOL</span></div>
             </div>
             <button id="claim-btn-treasure" onclick="claimCreatorFunds()" disabled class="w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5">Claim Locked</button>
             <p id="claim-timer-display" class="text-center text-[8px] text-zinc-600 mt-3 uppercase font-mono">Analyzing...</p>
@@ -465,6 +466,8 @@ setInterval(window.updateOraclePrice, 30000); // un solo interval a 30s
 const usdToLamports = usd => Math.floor((usd/(window.solPriceUSD||140))*window.solanaWeb3.LAMPORTS_PER_SOL);
 
 function updatePriceLabels() {
+    const feeLine = document.getElementById('upload-fee-line');
+    if(feeLine) feeLine.innerText = typeof UPLOAD_FEE_ENABLED !== 'undefined' && UPLOAD_FEE_ENABLED ? 'Fee: $0.01 ('+(0.01/window.solPriceUSD).toFixed(5)+' SOL) → 100% Platform' : '🆓 Free Upload';
     const u = document.getElementById('upload-sol-cost');
     if(u) u.innerText = (0.01/window.solPriceUSD).toFixed(5);
     const r = document.getElementById('report-sol-price');
