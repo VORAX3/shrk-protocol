@@ -1164,10 +1164,12 @@ window.updateInteractionUI = () => {
 window.loadProfile = async () => {
     const provider = window.solana || window.phantom?.solana;
     const section = document.getElementById('profile-section');
-    if(!provider?.isConnected || !provider?.publicKey) {
+    if(!provider?.publicKey) {
         section.innerHTML = '<p class="text-[9px] text-zinc-500 text-center py-4">Connect your wallet to view your profile</p>';
         return;
     }
+    // Prova a connettere se non ancora connesso
+    try { await provider.connect({ onlyIfTrusted: true }); } catch(e) {}
     const addr = provider.publicKey.toString();
     const short = addr.slice(0,4)+'...'+addr.slice(-4);
 
