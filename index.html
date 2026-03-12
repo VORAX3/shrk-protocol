@@ -776,16 +776,46 @@ window.giveLike = async () => {
 // REPOST (10% future interactions)
 // ==============================================
 window.shareContent = async () => {
+    const provider = window.solana || window.phantom?.solana;
+    if(!provider?.publicKey) return showToast('CONNECT WALLET FIRST! 🔌', true);
+    const ok = await window.checkShrkGate(provider);
+    if(!ok) return;
+
     const vid  = currentVideo().id;
-    const addr = window.solana?.publicKey?.toString()||'anon';
+    const addr = provider.publicKey.toString();
+
     try {
+        // Pagamento repost split: 40% creator / 10% reposter / 40% platform / 10% justice
+        const REPOST_COST_USD = 0.01; // $0.01 per repost
+        const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
+        const total = usdToLamports(REPOST_COST_USD);
+        const toCreator  = Math.floor(total * 0.40);
+        const toReposter = Math.floor(total * 0.10);
+        const toPlatform = Math.floor(total * 0.40);
+        const toJustice  = total - toCreator - toReposter - toPlatform;
+
+        showToast('REPOST 🔁 '+(REPOST_COST_USD/window.solPriceUSD*1000).toFixed(5)+' SOL');
+
+        const tx = await buildSplitTx(provider, conn, [
+            {to: new window.solanaWeb3.PublicKey(creatorWallet()),  lamports: toCreator},
+            {to: new window.solanaWeb3.PublicKey(addr),             lamports: toReposter},
+            {to: new window.solanaWeb3.PublicKey(PLATFORM_WALLET),  lamports: toPlatform},
+            {to: new window.solanaWeb3.PublicKey(JUSTICE_WALLET),   lamports: toJustice},
+        ]);
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature, 'confirmed');
+
         await db.from('reposts').upsert({
             video_id: vid,
             reposter_wallet: addr,
             original_creator_wallet: creatorWallet(),
         }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
-    } catch(e) { console.warn('Repost fallback:', e); }
-    showToast('REPOSTED! 🔁 Guadagnerai 10% dalle interazioni sul tuo repost 🦈');
+
+        showToast('REPOSTED! 🔁 You earn 10% from interactions on your repost 🦈');
+    } catch(e) {
+        console.error('Repost error:', e);
+        showToast(e.message?.includes('User rejected') ? 'REPOST CANCELED' : 'ERROR: Check SOL balance', true);
+    }
 };
 
 // ==============================================
