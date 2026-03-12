@@ -175,8 +175,14 @@
                     <i class="fas fa-cloud-upload-alt text-xl text-zinc-600 mb-1"></i>
                     <span id="file-label" class="text-[8px] text-zinc-500 font-bold uppercase">Upload Video</span>
                 </div>
-                <input type="text" id="new-video-creator" placeholder="@Username" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
-                <input type="text" id="new-video-ca" placeholder="Solana Creator Wallet" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
+                <div id="upload-wallet-display" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-zinc-400 text-xs">
+                    🔑 <span id="upload-wallet-addr">Connect wallet first</span>
+                </div>
+                <div id="upload-username-row">
+                    <input type="text" id="new-video-creator" placeholder="@Username (set once, permanent)" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
+                    <p class="text-[8px] text-zinc-600 mt-1 text-center">Your username is permanent and linked to your wallet forever</p>
+                </div>
+                <input type="hidden" id="new-video-ca">
                 <p class="text-[9px] text-zinc-500 text-center uppercase" id="upload-fee-line"></p>
                 <span id="upload-sol-cost" class="hidden"></span>
                 <button onclick="publishRealContent()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase text-xs tracking-widest">Publish</button>
@@ -888,11 +894,26 @@ window.publishRealContent = () => {
 
 window.executeUploadProtocol = async () => {
     document.getElementById('upload-confirm-overlay').classList.add('hidden');
-    const file    = document.getElementById('new-video-file')?.files[0];
-    const creator = document.getElementById('new-video-creator').value;
-    const ca      = document.getElementById('new-video-ca').value;
+    const file     = document.getElementById('new-video-file')?.files[0];
     const provider = window.solana||window.phantom?.solana;
-    if(!file||!creator||!ca||!provider?.publicKey) return showToast('Missing data ⚠️', true);
+    if(!file||!provider?.publicKey) return showToast('Missing data ⚠️', true);
+
+    const walletAddr = provider.publicKey.toString();
+
+    // Look up or register username
+    let creator = '';
+    const { data: profile } = await db.from('videos')
+        .select('creator').eq('creator_wallet', walletAddr).limit(1).single();
+    if(profile?.creator) {
+        // Use existing username
+        creator = profile.creator;
+    } else {
+        // First upload — require username
+        creator = document.getElementById('new-video-creator').value.trim();
+        if(!creator) return showToast('Set your @username first! ⚠️', true);
+        if(!creator.startsWith('@')) creator = '@' + creator;
+    }
+    const ca = walletAddr;
 
     try {
         // STEP 1: Platform fee (only when UPLOAD_FEE_ENABLED)
@@ -1111,6 +1132,22 @@ setInterval(()=>{
 // ==============================================
 // WALLET CONNECT
 // ==============================================
+window.updateUploadWalletUI = async (addr) => {
+    const el = document.getElementById('upload-wallet-addr');
+    if(el) el.innerText = addr.slice(0,6)+'...'+addr.slice(-4);
+    const caField = document.getElementById('new-video-ca');
+    if(caField) caField.value = addr;
+    // Check if user already has a username
+    const { data: profile } = await db.from('videos')
+        .select('creator').eq('creator_wallet', addr).limit(1).single();
+    const usernameRow = document.getElementById('upload-username-row');
+    const creatorInput = document.getElementById('new-video-creator');
+    if(profile?.creator) {
+        if(creatorInput) creatorInput.value = profile.creator;
+        if(usernameRow) usernameRow.innerHTML = '<p class="text-[10px] text-green-400 text-center py-1">👤 '+profile.creator+' <span class=\'text-zinc-600\'>(permanent)</span></p>';
+    }
+};
+
 window.connectWallet = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if(isMobile && !window.solana){
@@ -1138,6 +1175,7 @@ window.connectWallet = async () => {
             document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
             document.getElementById('wallet-text').innerText = pk.toString().slice(0,4)+'...'+pk.toString().slice(-4);
             showToast('WALLET CONNECTED! 🦈');
+            window.updateUploadWalletUI(pk.toString());
             // Load balance async (non-blocking)
             try {
                 const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
