@@ -1113,6 +1113,8 @@ window.connectWallet = async () => {
             const bal  = await conn.getBalance(pk);
             document.getElementById('wallet-text').innerText=(bal/1e9).toFixed(2)+' SOL | '+pk.toString().slice(0,4)+'...';
             document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            window._walletConnected = true;
+            window._walletPubkey = pk;
             showToast('Sincronizzato con Solana 🦈');
         } catch { showToast('CONNESSIONE FALLITA',true); }
     } else { alert('Phantom Wallet non trovato! (Usa Chrome + estensione)'); }
@@ -1164,13 +1166,12 @@ window.updateInteractionUI = () => {
 window.loadProfile = async () => {
     const provider = window.solana || window.phantom?.solana;
     const section = document.getElementById('profile-section');
-    if(!provider?.publicKey) {
+    const pubkey = window._walletPubkey || provider?.publicKey;
+    if(!pubkey) {
         section.innerHTML = '<p class="text-[9px] text-zinc-500 text-center py-4">Connect your wallet to view your profile</p>';
         return;
     }
-    // Prova a connettere se non ancora connesso
-    try { await provider.connect({ onlyIfTrusted: true }); } catch(e) {}
-    const addr = provider.publicKey.toString();
+    const addr = pubkey.toString();
     const short = addr.slice(0,4)+'...'+addr.slice(-4);
 
     // Carica SOL balance
