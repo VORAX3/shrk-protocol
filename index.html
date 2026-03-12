@@ -907,7 +907,7 @@ document.getElementById('new-video-file')?.addEventListener('change', async (e) 
         }
         const dup = allDNA.find(d=>(d.dna_hash||d.hash)===hash);
         if(dup) {
-            showToast('⚠️ DNA MATCH: già caricato da '+dup.creator,true);
+            showToast('⚠️ DNA MATCH: already uploaded by '+dup.creator,true);
             if(lbl){lbl.innerText='DNA DUPLICATE ❌';lbl.style.color='#ef4444';}
         } else {
             if(lbl){lbl.innerText='DNA OK: '+file.name.substring(0,15)+'... ✅';lbl.style.color='#10b981';}
@@ -921,9 +921,9 @@ window.publishRealContent = () => {
     const file    = document.getElementById('new-video-file')?.files[0];
     const creator = document.getElementById('new-video-creator').value;
     const ca      = document.getElementById('new-video-ca').value;
-    if(!file||!creator||!ca) return showToast('Compila tutti i campi! ⚠️',true);
+    if(!file||!creator||!ca) return showToast('Fill in all fields! ⚠️',true);
     const provider = window.solana||window.phantom?.solana;
-    if(!provider?.publicKey) return showToast('Connetti il Wallet! ⚠️',true);
+    if(!provider?.publicKey) return showToast('Connect your Wallet! ⚠️',true);
     document.getElementById('upload-confirm-overlay').classList.remove('hidden');
 };
 
@@ -962,7 +962,7 @@ window.executeUploadProtocol = async () => {
         const CLOUDINARY_CLOUD = 'dcqzabwwp';
         const CLOUDINARY_PRESET = 'shrk_videos'; // unsigned upload preset
 
-        showToast('STEP 2/3: UPLOAD VIDEO... 🌐');
+        showToast('STEP 2/3: UPLOADING VIDEO... 🌐');
         console.log('STEP 2: inizio upload Cloudinary');
 
         const formData = new FormData();
@@ -989,7 +989,7 @@ window.executeUploadProtocol = async () => {
         showToast('VIDEO CARICATO! ✅');
 
         // STEP 3: Salva su Supabase
-        showToast('STEP 3/3: REGISTRAZIONE ON-CHAIN... 🗄️');
+        showToast('STEP 3/3: SAVING ON-CHAIN... 🗄️');
         const newId = 'video_'+Date.now();
         await db.from('videos').insert({
             id:             newId,
@@ -1009,7 +1009,7 @@ window.executeUploadProtocol = async () => {
         document.getElementById('main-video').play();
         document.getElementById('creator-name').innerText=nv.creator;
         toggleDevMenu();
-        showToast('ALPHA PERMANENTE LIVE! 🦈🔥');
+        showToast('PERMANENT ALPHA LIVE! 🦈🔥');
 
     } catch(e) {
         console.error('=== UPLOAD ERROR DETAILS ===');
@@ -1185,7 +1185,7 @@ window.connectWallet = async () => {
             document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
             window._walletConnected = true;
             window._walletPubkey = pk;
-            showToast('Sincronizzato con Solana 🦈');
+            showToast('Synced with Solana 🦈');
         } catch { showToast('CONNESSIONE FALLITA',true); }
     } else { alert('Phantom Wallet non trovato! (Usa Chrome + estensione)'); }
 };
