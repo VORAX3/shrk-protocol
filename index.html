@@ -478,13 +478,38 @@ window.checkShrkGate = async (provider) => {
         showToast('VERIFYING $SHRK... 🔍');
         const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
         const mint = new window.solanaWeb3.PublicKey(SHRK_MINT);
-        const ata  = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
-        const bal  = await conn.getTokenAccountBalance(ata);
-        const amt  = bal.value.uiAmount || 0;
-        if(amt >= SHRK_GATE) return true;
-        showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
+        // Metodo 1: via ATA
+        try {
+            const ata  = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
+            const bal  = await conn.getTokenAccountBalance(ata);
+            const amt  = bal.value.uiAmount || 0;
+            console.log('SHRK balance (ATA):', amt);
+            if(amt >= SHRK_GATE) return true;
+            showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
+            return false;
+        } catch(ataErr) {
+            console.warn('ATA method failed, trying token accounts...', ataErr);
+        }
+        // Metodo 2: cerca tutti i token account del wallet
+        const tokenAccounts = await conn.getParsedTokenAccountsByOwner(
+            provider.publicKey,
+            { mint: mint }
+        );
+        console.log('Token accounts found:', tokenAccounts.value.length);
+        if(tokenAccounts.value.length > 0) {
+            const amt = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+            console.log('SHRK balance (parsed):', amt);
+            if(amt >= SHRK_GATE) return true;
+            showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
+            return false;
+        }
+        showToast('ACCESS DENIED: 0 / '+SHRK_GATE+' $SHRK 🦈',true);
         return false;
-    } catch(e) { showToast('ACCESS DENIED: 0 / '+SHRK_GATE+' $SHRK 🦈',true); return false; }
+    } catch(e) { 
+        console.error('SHRK gate error:', e);
+        showToast('ACCESS DENIED: 0 / '+SHRK_GATE+' $SHRK 🦈',true); 
+        return false; 
+    }
 };
 
 // ==============================================
