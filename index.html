@@ -1099,6 +1099,7 @@ window.loadJusticeLeaderboard = async () => {
 
 window.addEventListener('load',()=>{
     window.loadJusticeLeaderboard();
+    if(window._walletPubkey) window.updatePoolDisplay();
     const btn=document.getElementById('btn-confirm-upload');
     if(btn) btn.onclick=window.executeUploadProtocol;
 });
@@ -1106,50 +1107,63 @@ window.addEventListener('load',()=>{
 // ==============================================
 // CREATOR TREASURE / CLAIM
 // ==============================================
-window.updatePoolDisplay = () => {
-    const ca = creatorWallet();
-    const tb = parseFloat(localStorage.getItem('tb_'+ca))||0;
-    const te = parseFloat(localStorage.getItem('te_'+ca))||0;
-    const tot = tb+te;
-    const d=document.getElementById('creator-shrk-display'); if(d) d.innerText=tot.toFixed(5);
-    const b=document.getElementById('treasure-boost'); if(b) b.innerText=tb.toFixed(5)+' SOL';
-    const e=document.getElementById('treasure-eat');   if(e) e.innerText=te.toFixed(5)+' SOL';
+window.updatePoolDisplay = async () => {
+    const addr = window._walletPubkey?.toString();
+    if(!addr) return;
+    try {
+        const { data } = await db.from('creator_treasury')
+            .select('balance_sol, total_earned_sol, last_claim_at')
+            .eq('wallet', addr)
+            .single();
+        const bal = data?.balance_sol || 0;
+        const tot = data?.total_earned_sol || 0;
+        const d = document.getElementById('creator-shrk-display'); if(d) d.innerText = bal.toFixed(5);
+        const b = document.getElementById('treasure-boost'); if(b) b.innerText = bal.toFixed(5)+' SOL';
+        const e = document.getElementById('treasure-eat');   if(e) e.innerText = 'Total earned: '+tot.toFixed(5)+' SOL';
 
-    const THREE_DAYS = 9*24*60*60*1000; // 9 days
-    let last = parseInt(localStorage.getItem('lc_'+ca));
-    const now = Date.now();
-    if(!last){last=now;localStorage.setItem('lc_'+ca,last);}
-    const left = THREE_DAYS-(now-last);
-    const btn  = document.getElementById('claim-btn-treasure');
-    const tmr  = document.getElementById('claim-timer-display');
-    if(left<=0 && tot>0){
-        if(btn){btn.disabled=false;btn.innerText='CLAIM REWARDS';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer border-none';}
-        if(tmr){tmr.innerText='READY FOR HARVEST 🦈';tmr.className='text-center text-[10px] text-emerald-400 mt-3 uppercase font-bold animate-pulse';}
-    } else {
-        if(btn){btn.disabled=true;btn.innerText='CLAIM LOCKED';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5';}
-        const h=Math.floor(Math.max(0,left)/(1000*60*60));
-        const m=Math.floor((Math.max(0,left)%(1000*60*60))/(1000*60));
-        if(tmr) tmr.innerText = tot>0 ? 'LOCKED: '+h+'H '+m+'M' : 'NO FUNDS YET';
+        const NINE_DAYS = 9*24*60*60*1000;
+        const lastClaim = data?.last_claim_at ? new Date(data.last_claim_at).getTime() : 0;
+        const now = Date.now();
+        const left = NINE_DAYS - (now - lastClaim);
+        const btn = document.getElementById('claim-btn-treasure');
+        const tmr = document.getElementById('claim-timer-display');
+        if(left <= 0 && bal > 0) {
+            if(btn){btn.disabled=false;btn.innerText='CLAIM '+bal.toFixed(4)+' SOL';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer border-none';}
+            if(tmr){tmr.innerText='READY FOR HARVEST 🦈';tmr.className='text-center text-[10px] text-emerald-400 mt-3 uppercase font-bold animate-pulse';}
+        } else {
+            if(btn){btn.disabled=true;btn.innerText='CLAIM LOCKED';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5';}
+            const h = Math.floor(Math.max(0,left)/(1000*60*60));
+            const m = Math.floor((Math.max(0,left)%(1000*60*60))/(1000*60));
+            if(tmr) tmr.innerText = bal > 0 ? 'LOCKED: '+h+'H '+m+'M' : 'NO FUNDS YET';
+        }
+    } catch(e) {
+        console.warn('Treasury load failed:', e);
     }
 };
 
-window.claimCreatorFunds = () => {
-    const ca  = creatorWallet();
-    const tot = (parseFloat(localStorage.getItem('tb_'+ca))||0)+(parseFloat(localStorage.getItem('te_'+ca))||0);
-    if(tot<=0) return showToast('TREASURE EMPTY 🦈',true);
-    showToast('CLAIMING '+tot.toFixed(5)+' SOL... ⚡');
-    setTimeout(()=>{
-        localStorage.setItem('lc_'+ca,Date.now());
-        localStorage.setItem('tb_'+ca,0); localStorage.setItem('te_'+ca,0);
-        updatePoolDisplay();
-        showToast('BOUNTY SECURED! 🟢 (On-chain claim coming soon)');
-    },1500);
-};
+window.claimCreatorFunds = async () => {
+    const addr = window._walletPubkey?.toString();
+    if(!addr) return showToast('CONNECT WALLET FIRST 🦈', true);
+    const { data } = await db.from('creator_treasury')
+        .select('balance_sol, last_claim_at')
+        .eq('wallet', addr).single();
+    const bal = data?.balance_sol || 0;
+    if(bal <= 0) return showToast('TREASURE EMPTY 🦈', true);
+    const NINE_DAYS = 9*24*60*60*1000;
+    const lastClaim = data?.last_claim_at ? new Date(data.last_claim_at).getTime() : 0;
+    if(Date.now() - lastClaim < NINE_DAYS) return showToast('CLAIM STILL LOCKED ⏳', true);
 
-window.updateJusticeDisplay = () => {
-    const el=document.getElementById('foundation-total-display');
-    if(el) el.innerText=(parseFloat(localStorage.getItem('justice_total'))||0).toFixed(4);
-};
+    // Mark claim requested in Supabase — platform sends SOL manually
+    await db.from('creator_treasury').update({
+        last_claim_at: new Date().toISOString(),
+        balance_sol: 0,
+    }).eq('wallet', addr);
+
+    showToast('CLAIM REQUESTED! ✅ '+bal.toFixed(4)+' SOL will be sent within 24h 🦈');
+    updatePoolDisplay();
+};;
+
+window.updateJusticeDisplay = () => {}; // deprecated — treasury now on Supabase
 
 // ==============================================
 // UPDATE VISUALS
