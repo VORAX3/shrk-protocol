@@ -124,19 +124,19 @@
     <!-- BOTTOM BAR -->
     <div class="absolute bottom-0 left-0 w-full p-4 pb-8 z-50 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none">
         <!-- BOOST: $0.29 — 70% creator / 15% platform / 15% justice -->
-        <div class="flex flex-col items-center w-fit pointer-events-auto mb-3">
+        <div class="flex flex-col items-center w-fit pointer-events-auto mb-2">
             <button id="btn-boost" onclick="fanBoost()" class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 active:scale-90 transition-all shadow-lg">
                 <i class="fas fa-bolt text-yellow-400 text-2xl"></i>
             </button>
             <div class="text-[9px] font-black text-white mt-1 text-center">$0.29</div>
         </div>
-        <h3 id="creator-name" class="font-bold text-base text-white pointer-events-auto">@CyberShark_Official</h3>
-        <button id="creator-profile-btn" onclick="window.openCreatorProfile()" 
-            class="pointer-events-auto mb-1 px-3 py-1 rounded-full border border-blue-500 text-blue-400 text-[10px] font-bold"
+        <button id="creator-profile-btn" onclick="window.openCreatorProfile()"
+            class="pointer-events-auto mb-1 px-3 py-1 rounded-full border border-blue-500 text-blue-400 text-[10px] font-bold active:scale-95 transition"
             style="position:relative; z-index:200; background:rgba(37,99,235,0.2);">
             👤 View Profile
         </button>
-        <p class="text-xs text-gray-300">Integrity: <span id="hp-display" class="text-blue-500 font-mono font-bold">90000</span> HP</p>
+        <h3 id="creator-name" class="font-bold text-base text-white pointer-events-auto">@CyberShark_Official</h3>
+        <p class="text-xs text-gray-300">👁 <span id="view-count" class="text-white font-mono font-bold">0</span> views &nbsp;·&nbsp; Integrity: <span id="hp-display" class="text-blue-500 font-mono font-bold">90000</span> HP</p>
         <div class="w-full h-1 bg-zinc-800 rounded-full mt-1 mb-2 overflow-hidden">
             <div id="hp-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width:100%"></div>
         </div>
@@ -491,6 +491,7 @@ window.loadFeed = async () => {
                 src:     v.src,
                 dna:     v.dna_hash,
                 hp:      v.hp,
+                views:   v.views || 0,
             }));
             // Imposta HP del primo video
             currentHP = feedData[0].hp || MAX_HP;
@@ -1196,6 +1197,16 @@ window.playCreatorVideo = (videoId) => {
     document.getElementById('creator-profile-overlay').classList.add('hidden');
 };
 
+window.incrementView = async (videoId) => {
+    try {
+        // Increment locally immediately
+        const idx = feedData.findIndex(v => v.id === videoId);
+        if(idx >= 0) feedData[idx].views = (feedData[idx].views || 0) + 1;
+        // Save to Supabase
+        await dbWrite('incrementView', { videoId });
+    } catch(e) { console.warn('View count failed:', e); }
+};
+
 window.loadJusticeLeaderboard = async () => {
     const el = document.getElementById('justice-leaderboard');
     if(!el) return;
@@ -1369,6 +1380,8 @@ window.updateVisuals = () => {
     }
     // Sopra 30.000 HP → video perfetto, nessun filtro
 
+    const vc = document.getElementById('view-count');
+    if(vc) { const cur = feedData[currentFeedIndex]; vc.innerText = cur?.views >= 1000 ? (cur.views/1000).toFixed(1)+'K' : (cur?.views||0); }
     if(hpText){
         hpText.innerText = currentHP>=100000?Math.floor(currentHP/1000)+'K':currentHP.toFixed(0);
         // Testo HP diventa giallo a giorno 6, rosso a giorno 7
@@ -1628,6 +1641,7 @@ function handleSwipeDirection(dir){
     currentHP = cur.hp || MAX_HP;
     v.src=cur.src; v.muted=muted; v.play().catch(()=>{})
     document.getElementById('creator-name').innerText=cur.creator;
+    window.incrementView(cur.id);
     const ic=document.getElementById('audio-icon');
     if(ic) ic.className=muted?'fas fa-volume-mute text-lg text-gray-500':'fas fa-volume-up text-lg text-white animate-pulse';
     isBanned=false; updateVisuals(); updateInteractionUI();
