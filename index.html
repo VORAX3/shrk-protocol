@@ -1054,6 +1054,8 @@ window.executeUploadProtocol = async () => {
             dna_hash:       window.pendingVideoHash || null,
             hp:             MAX_HP,
         });
+        // Start 9-day claim countdown from upload
+        await dbWrite('initTreasury', { wallet: ca });
 
         // Aggiorna feed locale
         const nv = {id:newId,creator,ca,src:link,dna:window.pendingVideoHash,hp:MAX_HP};
