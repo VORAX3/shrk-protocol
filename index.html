@@ -1163,24 +1163,30 @@ window.updatePoolDisplay = async () => {
 window.claimCreatorFunds = async () => {
     const addr = window._walletPubkey?.toString();
     if(!addr) return showToast('CONNECT WALLET FIRST 🦈', true);
-    const { data } = await db.from('creator_treasury')
-        .select('balance_sol, last_claim_at')
-        .eq('wallet', addr).single();
-    const bal = data?.balance_sol || 0;
-    if(bal <= 0) return showToast('TREASURE EMPTY 🦈', true);
-    const NINE_DAYS = 9*24*60*60*1000;
-    const lastClaim = data?.last_claim_at ? new Date(data.last_claim_at).getTime() : 0;
-    if(Date.now() - lastClaim < NINE_DAYS) return showToast('CLAIM STILL LOCKED ⏳', true);
 
-    // Mark claim requested in Supabase — platform sends SOL manually
-    await db.from('creator_treasury').update({
-        last_claim_at: new Date().toISOString(),
-        balance_sol: 0,
-    }).eq('wallet', addr);
+    const btn = document.getElementById('claim-btn-treasure');
+    if(btn) { btn.disabled = true; btn.innerText = 'PROCESSING...'; }
 
-    showToast('CLAIM REQUESTED! ✅ '+bal.toFixed(4)+' SOL will be sent within 24h 🦈');
-    updatePoolDisplay();
-};;
+    try {
+        const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-claim', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON,
+                'Authorization': 'Bearer ' + SUPABASE_ANON,
+            },
+            body: JSON.stringify({ wallet: addr }),
+        });
+        const data = await res.json();
+        if(!data.ok) return showToast(data.error || 'CLAIM FAILED ❌', true);
+        showToast('BOUNTY SECURED! 🟢 '+data.amount_sol.toFixed(4)+' SOL sent! Sig: '+data.signature.slice(0,8)+'...');
+        await window.updatePoolDisplay();
+    } catch(e) {
+        showToast('CLAIM ERROR ❌ '+e.message, true);
+    } finally {
+        if(btn) { btn.disabled = false; }
+    }
+};;;
 
 window.updateJusticeDisplay = () => {}; // deprecated — treasury now on Supabase
 
