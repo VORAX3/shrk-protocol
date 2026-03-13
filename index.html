@@ -1102,23 +1102,37 @@ window.openCreatorProfile = async () => {
     const creatorName = document.getElementById('creator-name').innerText;
     const creatorWal = feedData[currentFeedIndex]?.ca || vid?.ca || '';
 
-
-    const overlay = document.getElementById('creator-profile-overlay');
-    const cpUsername = document.getElementById('cp-username');
+    const overlay  = document.getElementById('creator-profile-overlay');
+    const cpUser   = document.getElementById('cp-username');
     const cpWallet = document.getElementById('cp-wallet');
-    const cpStats = document.getElementById('cp-stats');
+    const cpStats  = document.getElementById('cp-stats');
     const cpVideos = document.getElementById('cp-videos');
+    const cpAvatar = document.getElementById('cp-avatar');
+    const cpBadges = document.getElementById('cp-badges');
+    const cpTreas  = document.getElementById('cp-treasury');
+    const cpTreasV = document.getElementById('cp-treasury-val');
 
-    cpUsername.innerText = creatorName;
+    // -- Generative avatar: letter + hue from wallet
+    const letter = (creatorName.replace('@','')[0]||'?').toUpperCase();
+    const hue    = creatorWal ? [...creatorWal].reduce((a,c)=>a+c.charCodeAt(0),0) % 360 : 220;
+    if(cpAvatar){
+        cpAvatar.innerText = letter;
+        cpAvatar.style.background = `linear-gradient(135deg,hsl(${hue},60%,20%),hsl(${(hue+40)%360},80%,10%))`;
+        cpAvatar.style.borderColor = `hsl(${hue},70%,50%)`;
+        cpAvatar.style.boxShadow   = `0 0 30px hsla(${hue},70%,50%,0.35)`;
+    }
+    cpUser.innerText   = creatorName;
     cpWallet.innerText = creatorWal ? creatorWal.slice(0,6)+'...'+creatorWal.slice(-4) : '';
-    cpStats.innerHTML = '<p class="text-zinc-500 text-[9px] col-span-2 text-center">Loading...</p>';
+    cpStats.innerHTML  = '<p class="text-zinc-600 text-[9px] col-span-2 text-center py-4">Loading...</p>';
     cpVideos.innerHTML = '';
+    if(cpBadges) cpBadges.innerHTML = '';
+    if(cpTreas)  cpTreas.classList.add('hidden');
     overlay.classList.remove('hidden');
 
     try {
         // Load all videos by this creator
         let videosQuery = db.from('videos')
-            .select('id, creator, hp, src, created_at')
+            .select('id, creator, hp, src, created_at, views')
             .eq('is_banned', false)
             .order('hp', { ascending: false });
         if(creatorWal) {
@@ -1133,52 +1147,87 @@ window.openCreatorProfile = async () => {
             .select('action, video_id')
             .in('video_id', (videos||[]).map(v => v.id));
 
-        const boosts = interactions?.filter(i => i.action === 'boost').length || 0;
-        const eats   = interactions?.filter(i => i.action === 'eat').length || 0;
-        const totalHP = (videos||[]).reduce((sum, v) => sum + (v.hp||0), 0);
+        const boosts   = interactions?.filter(i => i.action === 'boost').length  || 0;
+        const eats     = interactions?.filter(i => i.action === 'eat').length    || 0;
+        const reports  = interactions?.filter(i => i.action === 'report').length || 0;
+        const totalHP  = (videos||[]).reduce((a,v) => a + (v.hp||0), 0);
+        const totalViews = (videos||[]).reduce((a,v) => a + (v.views||0), 0);
 
-        cpStats.innerHTML = \`
+        // Badges
+        if(cpBadges){
+            const badges = [];
+            if(boosts > 10)          badges.push(['⚡','Top Boosted','yellow']);
+            if((videos||[]).length >= 5) badges.push(['🎬','Multi Creator','blue']);
+            if(totalViews > 1000)    badges.push(['👁','Viral','purple']);
+            if(eats < 2)             badges.push(['🛡','Integrity','green']);
+            cpBadges.innerHTML = badges.map(([ico,lbl,col])=>`
+                <span class="text-[8px] px-2 py-0.5 rounded-full border border-${col}-500/40 text-${col}-400 bg-${col}-900/20 font-bold">${ico} ${lbl}</span>
+            `).join('');
+        }
+
+        // Treasury snapshot (only if viewing own profile)
+        const myWallet = (window.solana||window.phantom?.solana)?.publicKey?.toString();
+        if(myWallet && creatorWal === myWallet && cpTreas && cpTreasV) {
+            try {
+                const { data: tdata } = await db.from('creator_treasury')
+                    .select('balance_sol').eq('wallet', myWallet).single();
+                if(tdata?.balance_sol > 0){
+                    cpTreasV.innerText = tdata.balance_sol.toFixed(5)+' SOL';
+                    cpTreas.classList.remove('hidden');
+                }
+            } catch(e){}
+        }
+
+        // Stats grid
+        const fmtViews = n => n >= 1000 ? (n/1000).toFixed(1)+'K' : n;
+        cpStats.innerHTML = `
             <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
-                <p class="text-white font-black text-lg">\${(videos||[]).length}</p>
-                <p class="text-zinc-500 text-[8px] uppercase">Videos</p>
+                <p class="text-white font-black text-lg">${(videos||[]).length}</p>
+                <p class="text-zinc-500 text-[8px] uppercase tracking-widest mt-0.5">Videos</p>
             </div>
             <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
-                <p class="text-yellow-400 font-black text-lg">\${boosts}</p>
-                <p class="text-zinc-500 text-[8px] uppercase">Total Boosts ⚡</p>
+                <p class="text-blue-400 font-black text-lg">${fmtViews(totalViews)}</p>
+                <p class="text-zinc-500 text-[8px] uppercase tracking-widest mt-0.5">Total Views 👁</p>
             </div>
             <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
-                <p class="text-red-400 font-black text-lg">\${eats}</p>
-                <p class="text-zinc-500 text-[8px] uppercase">Total Eats 💀</p>
+                <p class="text-yellow-400 font-black text-lg">${boosts}</p>
+                <p class="text-zinc-500 text-[8px] uppercase tracking-widest mt-0.5">Boosts ⚡</p>
             </div>
             <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
-                <p class="text-blue-400 font-black text-lg">\${Math.floor(totalHP).toLocaleString()}</p>
-                <p class="text-zinc-500 text-[8px] uppercase">Total HP</p>
+                <p class="text-red-400 font-black text-lg">${eats}</p>
+                <p class="text-zinc-500 text-[8px] uppercase tracking-widest mt-0.5">Eats 💀</p>
             </div>
-        \`;
+        `;
 
         if(!videos || videos.length === 0) {
-            cpVideos.innerHTML = '<p class="text-zinc-600 text-[9px] text-center py-4">No videos yet</p>';
+            cpVideos.innerHTML = '<p class="text-zinc-600 text-[9px] text-center py-6">No videos yet</p>';
             return;
         }
 
         cpVideos.innerHTML = videos.map(v => {
-            const hpPct = Math.min(100, (v.hp / 90000) * 100);
-            const hpColor = v.hp > 60000 ? 'bg-green-500' : v.hp > 30000 ? 'bg-yellow-500' : 'bg-red-500';
-            const date = new Date(v.created_at).toLocaleDateString();
-            return \`
-            <div class="bg-zinc-900 rounded-xl p-3 border border-zinc-800 cursor-pointer active:opacity-70"
-                 onclick="window.playCreatorVideo('\${v.id}')">
+            const hpPct   = Math.min(100, (v.hp / 90000) * 100);
+            const hpColor = v.hp > 60000 ? '#22c55e' : v.hp > 30000 ? '#eab308' : '#ef4444';
+            const date    = new Date(v.created_at).toLocaleDateString('it-IT',{day:'2-digit',month:'short'});
+            const views   = v.views || 0;
+            const isLive  = feedData[currentFeedIndex]?.id === v.id;
+            return `
+            <div class="rounded-xl p-3 border cursor-pointer active:opacity-70 transition"
+                 style="background:#111;border-color:${isLive?'#3b82f6':'#27272a'};"
+                 onclick="window.playCreatorVideo('${v.id}')">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-white text-[10px] font-bold">\${v.id}</span>
-                    <span class="text-zinc-500 text-[8px]">\${date}</span>
+                    <div class="flex items-center gap-1.5">
+                        ${isLive ? '<span class="text-[7px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-widest">▶ Live</span>' : ''}
+                        <span class="text-zinc-400 text-[9px] font-mono">${date}</span>
+                    </div>
+                    <span class="text-zinc-500 text-[8px]">👁 ${views >= 1000 ? (views/1000).toFixed(1)+'K' : views}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <div class="flex-1 h-1 bg-zinc-800 rounded-full">
-                        <div class="\${hpColor} h-1 rounded-full" style="width:\${hpPct}%"></div>
+                    <div class="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <div style="background:${hpColor};width:${hpPct}%;height:100%;border-radius:9999px;transition:width 0.5s;"></div>
                     </div>
-                    <span class="text-[9px] text-blue-400 font-mono">\${Math.floor(v.hp).toLocaleString()} HP</span>
+                    <span class="text-[9px] font-mono font-black" style="color:${hpColor};">${Math.floor(v.hp).toLocaleString()} HP</span>
                 </div>
-            </div>\`;
+            </div>`;
         }).join('');
 
     } catch(e) {
@@ -1200,12 +1249,13 @@ window.playCreatorVideo = (videoId) => {
     document.getElementById('creator-profile-overlay').classList.add('hidden');
 };
 
-window.incrementView = (videoId) => {
+window.incrementView = async (videoId) => {
     try {
         const idx = feedData.findIndex(v => v.id === videoId);
         if(idx >= 0) feedData[idx].views = (feedData[idx].views || 0) + 1;
         const vc = document.getElementById('view-count');
         if(vc){ const n = feedData[idx]?.views||0; vc.innerText = n>=1000?(n/1000).toFixed(1)+'K':n; }
+        // ✅ Persist to Supabase (fire-and-forget)
         dbWrite('incrementView', { videoId }).catch(()=>{});
     } catch(e) {}
 };
@@ -1384,7 +1434,11 @@ window.updateVisuals = () => {
     // Sopra 30.000 HP → video perfetto, nessun filtro
 
     const vc = document.getElementById('view-count');
-    if(vc) { const cur = feedData[currentFeedIndex]; vc.innerText = cur?.views >= 1000 ? (cur.views/1000).toFixed(1)+'K' : (cur?.views||0); }
+    if(vc) {
+        const cur = feedData[currentFeedIndex];
+        const n = cur?.views || 0;
+        vc.innerText = n >= 1000 ? (n/1000).toFixed(1)+'K' : n;
+    }
     if(hpText){
         hpText.innerText = currentHP>=100000?Math.floor(currentHP/1000)+'K':currentHP.toFixed(0);
         // Testo HP diventa giallo a giorno 6, rosso a giorno 7
@@ -1612,6 +1666,8 @@ window.startProtocol = async () => {
         v.load();
         v.play().catch(()=>{});
         document.getElementById('creator-name').innerText=feedData[0].creator;
+        // ✅ FIX: conta la view anche al primo caricamento
+        window.incrementView(feedData[0].id);
     }
     updateVisuals();
     showToast('PROTOCOL ONLINE 🦈');
@@ -1683,21 +1739,48 @@ window.addEventListener('load', async ()=>{
     </div>
 
     <!-- CREATOR PROFILE OVERLAY -->
-    <div id="creator-profile-overlay" class="fixed inset-0 z-[300] bg-black flex flex-col hidden">
-        <div class="flex items-center justify-between p-4 border-b border-zinc-800">
-            <button onclick="document.getElementById('creator-profile-overlay').classList.add('hidden')" class="text-zinc-400 text-xl">
-                <i class="fas fa-arrow-left"></i>
+    <div id="creator-profile-overlay" class="fixed inset-0 z-[300] bg-black flex flex-col hidden" style="overflow:hidden;">
+        <!-- TOP BAR -->
+        <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-zinc-900 flex-shrink-0">
+            <button onclick="document.getElementById('creator-profile-overlay').classList.add('hidden')" class="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-900 text-zinc-400 active:scale-90 transition">
+                <i class="fas fa-arrow-left text-sm"></i>
             </button>
-            <div class="text-center">
-                <h2 id="cp-username" class="text-white font-black text-sm tracking-widest"></h2>
-                <p id="cp-wallet" class="text-zinc-500 text-[9px]"></p>
-            </div>
-            <div class="w-6"></div>
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Creator Profile</span>
+            <div class="w-9"></div>
         </div>
-        <div class="flex-1 overflow-y-auto p-4">
-            <div id="cp-stats" class="grid grid-cols-2 gap-3 mb-6"></div>
-            <h3 class="text-[10px] font-black text-zinc-400 tracking-widest uppercase mb-3">📹 Videos</h3>
-            <div id="cp-videos" class="space-y-3"></div>
+
+        <!-- SCROLLABLE CONTENT -->
+        <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling:touch;">
+
+            <!-- HERO SECTION -->
+            <div class="relative flex flex-col items-center pt-8 pb-6 px-6" style="background:linear-gradient(180deg,#0a0a1a 0%,#000 100%);">
+                <!-- Generative Avatar -->
+                <div id="cp-avatar" class="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-3xl font-black border-2 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.4)]" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">?</div>
+                <h2 id="cp-username" class="text-white font-black text-base tracking-tight mb-0.5"></h2>
+                <p id="cp-wallet" class="text-zinc-600 text-[9px] font-mono mb-3"></p>
+                <!-- Badges row -->
+                <div id="cp-badges" class="flex gap-2 flex-wrap justify-center"></div>
+            </div>
+
+            <!-- STATS GRID -->
+            <div id="cp-stats" class="grid grid-cols-2 gap-2 px-4 mb-4"></div>
+
+            <!-- TREASURY SNAPSHOT -->
+            <div id="cp-treasury" class="mx-4 mb-4 p-3 rounded-xl border border-emerald-500/20 bg-emerald-900/10 hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">💰 My Treasury</span>
+                    <span id="cp-treasury-val" class="text-emerald-300 font-mono font-black text-sm">0.00000 SOL</span>
+                </div>
+                <p class="text-[8px] text-zinc-600 mt-1">Earnings from boosts on your videos</p>
+            </div>
+
+            <!-- VIDEOS LIST -->
+            <div class="px-4 mb-2">
+                <h3 class="text-[9px] font-black text-zinc-500 tracking-widest uppercase mb-3">📹 Videos</h3>
+                <div id="cp-videos" class="space-y-2"></div>
+            </div>
+
+            <div class="h-8"></div><!-- bottom spacer -->
         </div>
     </div>
 
