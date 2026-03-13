@@ -682,10 +682,12 @@ window.fanBoost = async () => {
         const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
         const tx = new window.solanaWeb3.Transaction();
         splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
-        const {blockhash} = await conn.getLatestBlockhash();
+        // Add unique memo via extra 1-lamport transfer to make each boost tx unique
+        tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:provider.publicKey,lamports:Math.floor(Math.random()*100)+1}));
+        const {blockhash, lastValidBlockHeight} = await conn.getLatestBlockhash();
         tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
         const {signature} = await provider.signAndSendTransaction(tx);
-        await conn.confirmTransaction(signature,'confirmed');
+        await conn.confirmTransaction({signature, blockhash, lastValidBlockHeight},'confirmed');
         if(window.audioBoost) window.audioBoost.play();
         currentHP = newHp;
         await window.saveHP(vid, currentHP);
