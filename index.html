@@ -1096,8 +1096,8 @@ window.openCreatorProfile = async () => {
     if(ph && !ph.classList.contains('hidden')) return; // not entered yet
     const vid = currentVideo();
     const creatorName = document.getElementById('creator-name').innerText;
-    const creatorWal = vid?.ca || feedData[currentFeedIndex]?.ca || '';
-    if(!creatorName || creatorName === '@CyberShark_Official') return;
+    const creatorWal = feedData[currentFeedIndex]?.ca || vid?.ca || '';
+
 
     const overlay = document.getElementById('creator-profile-overlay');
     const cpUsername = document.getElementById('cp-username');
@@ -1113,11 +1113,16 @@ window.openCreatorProfile = async () => {
 
     try {
         // Load all videos by this creator
-        const { data: videos } = await db.from('videos')
+        let videosQuery = db.from('videos')
             .select('id, creator, hp, src, created_at')
-            .eq('creator_wallet', creatorWal)
             .eq('is_banned', false)
             .order('hp', { ascending: false });
+        if(creatorWal) {
+            videosQuery = videosQuery.eq('creator_wallet', creatorWal);
+        } else {
+            videosQuery = videosQuery.eq('creator', creatorName);
+        }
+        const { data: videos } = await videosQuery;
 
         // Load interactions stats
         const { data: interactions } = await db.from('interactions')
