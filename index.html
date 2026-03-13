@@ -65,7 +65,7 @@
     </div>
 
     <!-- PLACEHOLDER -->
-    <div id="placeholder" onclick="startProtocol()" class="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black cursor-pointer transition-opacity duration-500">
+    <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black cursor-pointer transition-opacity duration-500">
         <i class="fas fa-shark text-6xl mb-6 text-blue-600 animate-pulse"></i>
         <h1 class="text-3xl font-black tracking-tighter mb-1">VORAX ZONE</h1>
         <p class="text-[10px] font-mono text-blue-400 animate-pulse uppercase tracking-[0.3em]">Tap to Enter</p>
@@ -131,6 +131,11 @@
             <div class="text-[9px] font-black text-white mt-1 text-center">$0.29</div>
         </div>
         <h3 id="creator-name" class="font-bold text-base text-white pointer-events-auto">@CyberShark_Official</h3>
+        <button id="creator-profile-btn" onclick="window.openCreatorProfile()" 
+            class="text-[9px] text-blue-400 underline pointer-events-auto cursor-pointer bg-transparent border-none p-0 mb-1"
+            style="position:relative; z-index:200;">
+            👤 View Profile
+        </button>
         <p class="text-xs text-gray-300">Integrity: <span id="hp-display" class="text-blue-500 font-mono font-bold">90000</span> HP</p>
         <div class="w-full h-1 bg-zinc-800 rounded-full mt-1 mb-2 overflow-hidden">
             <div id="hp-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width:100%"></div>
@@ -1085,6 +1090,107 @@ window.executeUploadProtocol = async () => {
     }
 };
 
+window.openCreatorProfile = async () => {
+    // Make sure placeholder is hidden
+    const ph = document.getElementById('placeholder');
+    if(ph && !ph.classList.contains('hidden')) return; // not entered yet
+    const vid = currentVideo();
+    const creatorName = document.getElementById('creator-name').innerText;
+    const creatorWal = vid?.ca || feedData[currentFeedIndex]?.ca || '';
+    if(!creatorName || creatorName === '@CyberShark_Official') return;
+
+    const overlay = document.getElementById('creator-profile-overlay');
+    const cpUsername = document.getElementById('cp-username');
+    const cpWallet = document.getElementById('cp-wallet');
+    const cpStats = document.getElementById('cp-stats');
+    const cpVideos = document.getElementById('cp-videos');
+
+    cpUsername.innerText = creatorName;
+    cpWallet.innerText = creatorWal ? creatorWal.slice(0,6)+'...'+creatorWal.slice(-4) : '';
+    cpStats.innerHTML = '<p class="text-zinc-500 text-[9px] col-span-2 text-center">Loading...</p>';
+    cpVideos.innerHTML = '';
+    overlay.classList.remove('hidden');
+
+    try {
+        // Load all videos by this creator
+        const { data: videos } = await db.from('videos')
+            .select('id, creator, hp, src, created_at')
+            .eq('creator_wallet', creatorWal)
+            .eq('is_banned', false)
+            .order('hp', { ascending: false });
+
+        // Load interactions stats
+        const { data: interactions } = await db.from('interactions')
+            .select('action, video_id')
+            .in('video_id', (videos||[]).map(v => v.id));
+
+        const boosts = interactions?.filter(i => i.action === 'boost').length || 0;
+        const eats   = interactions?.filter(i => i.action === 'eat').length || 0;
+        const totalHP = (videos||[]).reduce((sum, v) => sum + (v.hp||0), 0);
+
+        cpStats.innerHTML = \`
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-white font-black text-lg">\${(videos||[]).length}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Videos</p>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-yellow-400 font-black text-lg">\${boosts}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Total Boosts ⚡</p>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-red-400 font-black text-lg">\${eats}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Total Eats 💀</p>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-blue-400 font-black text-lg">\${Math.floor(totalHP).toLocaleString()}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Total HP</p>
+            </div>
+        \`;
+
+        if(!videos || videos.length === 0) {
+            cpVideos.innerHTML = '<p class="text-zinc-600 text-[9px] text-center py-4">No videos yet</p>';
+            return;
+        }
+
+        cpVideos.innerHTML = videos.map(v => {
+            const hpPct = Math.min(100, (v.hp / 90000) * 100);
+            const hpColor = v.hp > 60000 ? 'bg-green-500' : v.hp > 30000 ? 'bg-yellow-500' : 'bg-red-500';
+            const date = new Date(v.created_at).toLocaleDateString();
+            return \`
+            <div class="bg-zinc-900 rounded-xl p-3 border border-zinc-800 cursor-pointer active:opacity-70"
+                 onclick="window.playCreatorVideo('\${v.id}')">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-white text-[10px] font-bold">\${v.id}</span>
+                    <span class="text-zinc-500 text-[8px]">\${date}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 h-1 bg-zinc-800 rounded-full">
+                        <div class="\${hpColor} h-1 rounded-full" style="width:\${hpPct}%"></div>
+                    </div>
+                    <span class="text-[9px] text-blue-400 font-mono">\${Math.floor(v.hp).toLocaleString()} HP</span>
+                </div>
+            </div>\`;
+        }).join('');
+
+    } catch(e) {
+        cpVideos.innerHTML = '<p class="text-zinc-600 text-[9px] text-center py-4">Error loading profile</p>';
+    }
+};
+
+window.playCreatorVideo = (videoId) => {
+    const idx = feedData.findIndex(v => v.id === videoId);
+    if(idx >= 0) {
+        currentFeedIndex = idx;
+        const cur = feedData[idx];
+        currentHP = cur.hp || 90000;
+        document.getElementById('main-video').src = cur.src;
+        document.getElementById('main-video').play();
+        document.getElementById('creator-name').innerText = cur.creator;
+        updateVisuals();
+    }
+    document.getElementById('creator-profile-overlay').classList.add('hidden');
+};
+
 window.loadJusticeLeaderboard = async () => {
     const el = document.getElementById('justice-leaderboard');
     if(!el) return;
@@ -1136,6 +1242,14 @@ window.loadJusticeLeaderboard = async () => {
 };
 
 window.addEventListener('load',()=>{
+    const ph = document.getElementById('placeholder');
+    if(ph) {
+        ph.addEventListener('click', function handler() {
+            ph.removeEventListener('click', handler);
+            window.startProtocol();
+        });
+    }
+
     window.loadJusticeLeaderboard();
     if(window._walletPubkey) window.updatePoolDisplay();
     const btn=document.getElementById('btn-confirm-upload');
@@ -1465,8 +1579,9 @@ window.toggleDevMenu = () => {
     } else { m.classList.add('hidden');m.classList.remove('flex'); }
 };
 window.startProtocol = async () => {
-    updateOraclePrice();
     const ph=document.getElementById('placeholder');
+    if(ph && ph.classList.contains('hidden')) return; // already started
+    updateOraclePrice();
     if(ph) ph.style.opacity='0';
     showToast('LOADING FEED... 🌐');
     await window.loadFeed();
@@ -1479,7 +1594,7 @@ window.startProtocol = async () => {
     }
     updateVisuals();
     showToast('PROTOCOL ONLINE 🦈');
-    setTimeout(()=>{if(ph)ph.classList.add('hidden');},500);
+    setTimeout(()=>{ if(ph){ ph.classList.add('hidden'); ph.style.zIndex='-1'; ph.style.pointerEvents='none'; } },500);
 };
 
 // ==============================================
@@ -1542,6 +1657,25 @@ window.addEventListener('load', async ()=>{
                 Install Phantom →
             </a>
             <button onclick="document.getElementById('mobile-phantom-overlay').classList.add('hidden')" class="text-zinc-600 text-[10px] uppercase tracking-widest">Cancel</button>
+        </div>
+    </div>
+
+    <!-- CREATOR PROFILE OVERLAY -->
+    <div id="creator-profile-overlay" class="fixed inset-0 z-[300] bg-black flex flex-col hidden">
+        <div class="flex items-center justify-between p-4 border-b border-zinc-800">
+            <button onclick="document.getElementById('creator-profile-overlay').classList.add('hidden')" class="text-zinc-400 text-xl">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="text-center">
+                <h2 id="cp-username" class="text-white font-black text-sm tracking-widest"></h2>
+                <p id="cp-wallet" class="text-zinc-500 text-[9px]"></p>
+            </div>
+            <div class="w-6"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="cp-stats" class="grid grid-cols-2 gap-3 mb-6"></div>
+            <h3 class="text-[10px] font-black text-zinc-400 tracking-widest uppercase mb-3">📹 Videos</h3>
+            <div id="cp-videos" class="space-y-3"></div>
         </div>
     </div>
 
