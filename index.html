@@ -2,6 +2,14 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VORAX">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src *; img-src * data: blob:; media-src * blob:; frame-src *;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SHRK Protocol</title>
@@ -57,7 +65,7 @@
     </div>
 
     <!-- PLACEHOLDER -->
-    <div id="placeholder" onclick="startProtocol()" class="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black cursor-pointer transition-opacity duration-500">
+    <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black cursor-pointer transition-opacity duration-500">
         <i class="fas fa-shark text-6xl mb-6 text-blue-600 animate-pulse"></i>
         <h1 class="text-3xl font-black tracking-tighter mb-1">VORAX ZONE</h1>
         <p class="text-[10px] font-mono text-blue-400 animate-pulse uppercase tracking-[0.3em]">Tap to Enter</p>
@@ -113,23 +121,31 @@
         </div>
     </div>
 
-    <!-- BOTTOM BAR -->
-    <div class="absolute bottom-0 left-0 w-full p-4 pb-8 z-50 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none">
-        <!-- BOOST: $0.29 — 70% creator / 15% platform / 15% justice -->
-        <div class="flex flex-col items-center w-fit pointer-events-auto mb-3">
-            <button id="btn-boost" onclick="fanBoost()" class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 active:scale-90 transition-all shadow-lg">
-                <i class="fas fa-bolt text-yellow-400 text-2xl"></i>
-            </button>
-            <div class="text-[9px] font-black text-white mt-1 text-center">$0.29</div>
+    <!-- BOTTOM BAR GRADIENT (non-interactive) -->
+    <div class="absolute bottom-0 left-0 w-full h-48 z-40 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none"></div>
+
+    <!-- BOOST BUTTON -->
+    <div class="absolute bottom-32 left-4 z-50 flex flex-col items-center">
+        <button id="btn-boost" onclick="fanBoost()" class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 active:scale-90 transition-all shadow-lg">
+            <i class="fas fa-bolt text-yellow-400 text-2xl"></i>
+        </button>
+        <div class="text-[9px] font-black text-white mt-1 text-center">$0.29</div>
+    </div>
+
+    <!-- CREATOR INFO -->
+    <div class="absolute bottom-4 left-4 z-50 pb-4" style="max-width:70%;">
+        <button id="creator-profile-btn" onclick="window.openCreatorProfile()"
+            style="display:block; margin-bottom:4px; padding:3px 10px; border-radius:999px; border:1px solid #3b82f6; color:#60a5fa; font-size:10px; font-weight:700; background:rgba(37,99,235,0.2); cursor:pointer;">
+            👤 View Profile
+        </button>
+        <h3 id="creator-name" style="font-weight:700; font-size:15px; color:white; margin:0 0 2px 0;">@CyberShark_Official</h3>
+        <p style="font-size:11px; color:#d1d5db; margin:0 0 4px 0;">👁 <span id="view-count" style="color:white; font-family:monospace; font-weight:700;">0</span> views &nbsp;·&nbsp; Integrity: <span id="hp-display" style="color:#3b82f6; font-family:monospace; font-weight:700;">90000</span> HP</p>
+        <div style="width:100%; height:3px; background:#27272a; border-radius:9999px; overflow:hidden; margin-bottom:6px;">
+            <div id="hp-bar" style="height:100%; background:#3b82f6; border-radius:9999px; width:100%; transition:width 1s;"></div>
         </div>
-        <h3 id="creator-name" class="font-bold text-base text-white pointer-events-auto">@CyberShark_Official</h3>
-        <p class="text-xs text-gray-300">👁 <span id="view-count" class="text-white font-mono font-bold">0</span> &nbsp;·&nbsp; Integrity: <span id="hp-display" class="text-blue-500 font-mono font-bold">90000</span> HP</p>
-        <div class="w-full h-1 bg-zinc-800 rounded-full mt-1 mb-2 overflow-hidden">
-            <div id="hp-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width:100%"></div>
-        </div>
-        <div class="flex items-center gap-2 mt-2 opacity-70 w-2/3 pointer-events-auto" onclick="toggleMute()">
-            <i id="audio-icon" class="fas fa-volume-up text-sm"></i>
-            <div class="marquee-container text-[9px] font-mono text-blue-400 uppercase tracking-tighter">
+        <div onclick="toggleMute()" style="display:flex; align-items:center; gap:6px; opacity:0.7; cursor:pointer; width:60vw; overflow:hidden;">
+            <i id="audio-icon" class="fas fa-volume-up" style="font-size:13px;"></i>
+            <div class="marquee-container" style="font-size:9px; font-family:monospace; color:#60a5fa; text-transform:uppercase; letter-spacing:0.05em;">
                 <span class="marquee-text">SHRK Protocol • Boost $0.29 • Eat $0.02 • Report $0.09 • Revive $2.99 • Platform in $SHRK • </span>
             </div>
         </div>
@@ -175,8 +191,14 @@
                     <i class="fas fa-cloud-upload-alt text-xl text-zinc-600 mb-1"></i>
                     <span id="file-label" class="text-[8px] text-zinc-500 font-bold uppercase">Upload Video</span>
                 </div>
-                <input type="text" id="new-video-creator" placeholder="@Username" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
-                <input type="text" id="new-video-ca" placeholder="Solana Creator Wallet" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
+                <div id="upload-wallet-display" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-zinc-400 text-xs">
+                    🔑 <span id="upload-wallet-addr">Connect wallet first</span>
+                </div>
+                <div id="upload-username-row">
+                    <input type="text" id="new-video-creator" placeholder="@Username (set once, permanent)" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-white text-xs outline-none focus:border-blue-500">
+                    <p class="text-[8px] text-zinc-600 mt-1 text-center">Your username is permanent and linked to your wallet forever</p>
+                </div>
+                <input type="hidden" id="new-video-ca">
                 <p class="text-[9px] text-zinc-500 text-center uppercase" id="upload-fee-line"></p>
                 <span id="upload-sol-cost" class="hidden"></span>
                 <button onclick="publishRealContent()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase text-xs tracking-widest">Publish</button>
@@ -191,7 +213,33 @@
             <div class="text-2xl font-mono font-bold text-white"><span id="foundation-total-display">0.0000</span> <span class="text-[10px] text-blue-400">SOL</span></div>
             <p class="text-[8px] text-zinc-600 mt-1">Report: 100% Limbo per-video • Boost: 15% Justice share</p>
         </div>
-        <!-- HOW IT WORKS -->
+        <!-- JUSTICE HUNTERS LEADERBOARD -->
+        <div class="mb-6 p-5 border border-yellow-500/30 rounded-2xl bg-yellow-900/10">
+            <h3 class="text-[10px] font-black mb-1 text-yellow-400 tracking-[0.2em] uppercase">⚖️ Justice Hunters</h3>
+            <p class="text-[8px] text-zinc-500 mb-4">Top reporters this month · Resets every 30th · 1,000,000 $SHRK prize pool</p>
+            <div id="justice-leaderboard">
+                <p class="text-[9px] text-zinc-600 text-center py-2">Loading...</p>
+            </div>
+            <div class="mt-3 border-t border-zinc-800 pt-3">
+                <p class="text-[8px] text-zinc-600 text-center">🏆 Prize distribution (parimerito divide)</p>
+                <div class="grid grid-cols-5 gap-1 mt-2 text-center">
+                    <div class="text-[7px] text-yellow-400">1st<br>280k</div>
+                    <div class="text-[7px] text-zinc-300">2nd<br>200k</div>
+                    <div class="text-[7px] text-zinc-400">3rd<br>150k</div>
+                    <div class="text-[7px] text-zinc-500">4th<br>100k</div>
+                    <div class="text-[7px] text-zinc-600">5th<br>80k</div>
+                </div>
+                <div class="grid grid-cols-5 gap-1 mt-1 text-center">
+                    <div class="text-[7px] text-zinc-600">6th<br>60k</div>
+                    <div class="text-[7px] text-zinc-600">7th<br>50k</div>
+                    <div class="text-[7px] text-zinc-600">8th<br>40k</div>
+                    <div class="text-[7px] text-zinc-600">9th<br>25k</div>
+                    <div class="text-[7px] text-zinc-600">10th<br>15k</div>
+                </div>
+            </div>
+        </div>
+
+  <!-- HOW IT WORKS -->
         <div class="mb-6 p-5 border border-zinc-700/50 rounded-2xl bg-zinc-900/20">
             <h3 class="text-[10px] font-black mb-4 text-white tracking-[0.2em] uppercase">📖 How It Works</h3>
             <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
@@ -252,7 +300,33 @@
                 <button onclick="document.getElementById('upload-confirm-overlay').classList.add('hidden')" class="w-full py-3 text-[10px] font-bold text-zinc-600 uppercase">Cancel</button>
             </div>
         </div>
-        <!-- HOW IT WORKS -->
+        <!-- JUSTICE HUNTERS LEADERBOARD -->
+        <div class="mb-6 p-5 border border-yellow-500/30 rounded-2xl bg-yellow-900/10">
+            <h3 class="text-[10px] font-black mb-1 text-yellow-400 tracking-[0.2em] uppercase">⚖️ Justice Hunters</h3>
+            <p class="text-[8px] text-zinc-500 mb-4">Top reporters this month · Resets every 30th · 1,000,000 $SHRK prize pool</p>
+            <div id="justice-leaderboard">
+                <p class="text-[9px] text-zinc-600 text-center py-2">Loading...</p>
+            </div>
+            <div class="mt-3 border-t border-zinc-800 pt-3">
+                <p class="text-[8px] text-zinc-600 text-center">🏆 Prize distribution (parimerito divide)</p>
+                <div class="grid grid-cols-5 gap-1 mt-2 text-center">
+                    <div class="text-[7px] text-yellow-400">1st<br>280k</div>
+                    <div class="text-[7px] text-zinc-300">2nd<br>200k</div>
+                    <div class="text-[7px] text-zinc-400">3rd<br>150k</div>
+                    <div class="text-[7px] text-zinc-500">4th<br>100k</div>
+                    <div class="text-[7px] text-zinc-600">5th<br>80k</div>
+                </div>
+                <div class="grid grid-cols-5 gap-1 mt-1 text-center">
+                    <div class="text-[7px] text-zinc-600">6th<br>60k</div>
+                    <div class="text-[7px] text-zinc-600">7th<br>50k</div>
+                    <div class="text-[7px] text-zinc-600">8th<br>40k</div>
+                    <div class="text-[7px] text-zinc-600">9th<br>25k</div>
+                    <div class="text-[7px] text-zinc-600">10th<br>15k</div>
+                </div>
+            </div>
+        </div>
+
+  <!-- HOW IT WORKS -->
         <div class="mb-6 p-5 border border-zinc-700/50 rounded-2xl bg-zinc-900/20">
             <h3 class="text-[10px] font-black mb-5 text-white tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-book-open"></i> How It Works</h3>
             <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
@@ -331,15 +405,17 @@ const SUPABASE_URL    = 'https://mfdzlcfygbnpvmswjqdx.supabase.co';
 const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mZHpsY2Z5Z2JucHZtc3dqcWR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjExOTYsImV4cCI6MjA4ODc5NzE5Nn0.eTCRFaeyM4Qp48BD4O08QvrncfZ4ZddYu7U_Qftu1jA';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+
 // ==============================================
 // CONFIGURAZIONE GLOBALE
 // ==============================================
-const SHRK_MINT      = '9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY';
-const PLATFORM_WALLET = '7j7KEbQ9Qm9rZJGN8hD3TGowZmta8eFwmZEBVmpqvnoD';
-const JUSTICE_WALLET  = 'ChL2ki6M2rdbUUhGtZ2frNhuPyNcTTcnK6WA33whFHEd';
-const RPC_URL         = 'https://mainnet.helius-rpc.com/?api-key=fe9e11d1-3603-4041-a552-fb7a9518d61c';
+// SHRK_MINT — protected server-side
+// PLATFORM_WALLET — protected server-side
+// JUSTICE_WALLET — protected server-side
+const RPC_URL         = 'https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-rpc';
+const TX_RPC          = 'https://mainnet.helius-rpc.com/?api-key=fe9e11d1-3603-4041-a552-fb7a9518d61c';
 const SHRK_GATE       = 5000;
-const MAX_HP          = 90000;
+const MAX_HP          = 90000; // starting HP on upload — no maximum cap
 const DECAY_PER_SEC   = 10000 / 86400;
 const REPORT_THRESHOLD = 0.75;
 const UPLOAD_FEE_ENABLED = false; // → set to true after 10,000 videos
@@ -398,7 +474,7 @@ let isBanned   = false;
 let isSwiping  = false;
 
 const currentVideo  = () => feedData[currentFeedIndex] || {};
-const creatorWallet = () => currentVideo().ca || PLATFORM_WALLET;
+const creatorWallet = () => currentVideo().ca || '';
 
 // Carica il feed da Supabase ordinato per HP decrescente
 window.loadFeed = async () => {
@@ -424,7 +500,7 @@ window.loadFeed = async () => {
             currentHP = feedData[0].hp || MAX_HP;
         }
     } catch(e) {
-        console.warn('Supabase offline, uso feed locale di fallback:', e);
+        console.warn('Supabase offline, using fallback feed:', e);
         feedData = [
             {id:'video_1',creator:'@CyberShark_Official',ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://vjs.zencdn.net/v/oceans.mp4',dna:null,hp:90000},
             {id:'video_2',creator:'@Crypto_Bunny',       ca:'9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY',src:'https://www.w3schools.com/html/mov_bbb.mp4',dna:null,hp:90000},
@@ -438,26 +514,18 @@ window.loadFeed = async () => {
 // Salva HP su Supabase (con fallback localStorage)
 window.saveHP = async (videoId, hp) => {
     try {
-        await db.from('videos').update({ hp, last_tick: new Date().toISOString() }).eq('id', videoId);
+        await dbWrite('saveHP', { videoId, hp });
     } catch(e) {
-        localStorage.setItem('hp_'+videoId, hp); // fallback
+        localStorage.setItem('hp_'+videoId, hp);
     }
 };
 
 // Registra un'interazione su Supabase
 window.saveInteraction = async (videoId, wallet, action, txSignature='', lamports=0, category=null) => {
     try {
-        await db.from('interactions').upsert({
-            video_id: videoId,
-            wallet,
-            action,
-            category,
-            tx_signature: txSignature,
-            lamports,
-        }, { onConflict: 'video_id,wallet,action', ignoreDuplicates: false });
+        await dbWrite('saveInteraction', { videoId, wallet, action, txSignature, lamports, category });
     } catch(e) {
-        console.warn('saveInteraction fallback localStorage:', e);
-        localStorage.setItem(action+'_'+wallet+'_'+videoId, 'true');
+        console.warn('saveInteraction failed:', e);
     }
 };
 
@@ -547,38 +615,57 @@ window.checkShrkGate = async (provider) => {
     if(!provider?.publicKey) { showToast('CONNECT WALLET FIRST! 🔌',true); return false; }
     try {
         showToast('VERIFYING $SHRK... 🔍');
-        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const mint = new window.solanaWeb3.PublicKey(SHRK_MINT);
-        // Metodo 1: via ATA
-        try {
-            const ata  = await window.splToken.getAssociatedTokenAddress(mint, provider.publicKey);
-            const bal  = await conn.getTokenAccountBalance(ata);
-            const amt  = bal.value.uiAmount || 0;
-            if(amt >= SHRK_GATE) return true;
-            showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
+        const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-gate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer '+SUPABASE_ANON },
+            body: JSON.stringify({ wallet: provider.publicKey.toString(), rpcUrl: RPC_URL })
+        });
+        const data = await res.json();
+        if(data.error) { showToast('GATE ERROR ❌', true); return false; }
+        if(!data.passed) { showToast('NEED 5,000 $SHRK TO INTERACT 🦈', true); return false; }
+        return true;
+    } catch(e) { showToast('GATE CHECK FAILED ❌', true); return false; }
+};
+
+
+// Helper: all DB writes go through vorax-db edge function (RLS safe)
+async function dbWrite(op, payload) {
+    const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-db', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': 'Bearer ' + SUPABASE_ANON,
+        },
+        body: JSON.stringify({ op, ...payload }),
+    });
+    return res.json();
+}
+
+async function checkSolBalance(provider, minUsd) {
+    try {
+        const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
+        const bal = await conn.getBalance(provider.publicKey);
+        const solNeeded = (minUsd / window.solPriceUSD) + 0.001; // +0.001 SOL for tx fees
+        if(bal / 1e9 < solNeeded) {
+            showToast('NOT ENOUGH SOL ❌ Need ~'+(solNeeded).toFixed(4)+' SOL (you have '+(bal/1e9).toFixed(4)+')', true);
             return false;
-        } catch(ataErr) {
-            console.warn('ATA method failed, trying token accounts...', ataErr);
         }
-        // Metodo 2: cerca tutti i token account del wallet
-        const mintPubkey = new window.solanaWeb3.PublicKey('9RUVGAF9M71vaUZaXMWbUmdwLjuBNHXxAZyuq9yNE5BY');
-        const tokenAccounts = await conn.getParsedTokenAccountsByOwner(
-            provider.publicKey,
-            { mint: mintPubkey }
-        );
-        if(tokenAccounts.value.length > 0) {
-            const amt = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
-            if(amt >= SHRK_GATE) return true;
-            showToast('ACCESS DENIED: '+amt.toFixed(0)+' / '+SHRK_GATE+' $SHRK 🦈',true);
-            return false;
-        }
-        showToast('ACCESS DENIED: 0 / '+SHRK_GATE+' $SHRK 🦈',true);
-        return false;
-    } catch(e) { 
-        console.error('SHRK gate error:', e);
-        showToast('ACCESS DENIED: 0 / '+SHRK_GATE+' $SHRK 🦈',true); 
-        return false; 
+        return true;
+    } catch(e) {
+        return true; // if check fails, let it proceed
     }
+}
+
+async function voraxAction(action, videoId, wallet) {
+    const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer '+SUPABASE_ANON },
+        body: JSON.stringify({ action, videoId, wallet, solPriceUSD: window.solPriceUSD })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Action failed');
+    return data;
 };
 
 // ==============================================
@@ -601,37 +688,32 @@ window.fanBoost = async () => {
     const provider = window.solana || window.phantom?.solana;
     if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌',true);
     if(!await window.checkShrkGate(provider)) return;
-
     const btn = document.getElementById('btn-boost');
+    if(btn){btn.disabled=true;btn.classList.add('animate-pulse');}
     try {
-        if(btn){btn.disabled=true;btn.classList.add('animate-pulse');}
-        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const total = usdToLamports(0.29);
-        const toCreator  = Math.floor(total*0.70);
-        const toPlatform = Math.floor(total*0.15);
-        const toJustice  = total - toCreator - toPlatform;
-
-        showToast('BOOST ⚡ '+(0.29/window.solPriceUSD).toFixed(5)+' SOL');
-        const tx = await buildSplitTx(provider, conn, [
-            {to:new window.solanaWeb3.PublicKey(creatorWallet()), lamports:toCreator},
-            {to:new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports:toPlatform},
-            {to:new window.solanaWeb3.PublicKey(JUSTICE_WALLET),  lamports:toJustice},
-        ]);
+        const vid  = currentVideo().id;
+        const addr = provider.publicKey.toString();
+                if(!await checkSolBalance(provider, 0.29)) { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} return; }
+        const { splits, newHp } = await voraxAction('boost', vid, addr);
+        showToast('BOOSTING: '+(0.29/window.solPriceUSD).toFixed(5)+' SOL ⚡');
+        const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
+        // Add unique memo via extra 1-lamport transfer to make each boost tx unique
+        tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:provider.publicKey,lamports:Math.floor(Math.random()*100)+1}));
+        const {blockhash, lastValidBlockHeight} = await conn.getLatestBlockhash();
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
         const {signature} = await provider.signAndSendTransaction(tx);
-        await conn.confirmTransaction(signature,'confirmed');
-
-        currentHP += 10000;
-        await window.saveHP(currentVideo().id, currentHP);
-        await window.saveInteraction(currentVideo().id, provider.publicKey.toString(), 'boost', signature, toCreator);
-
-        updateVisuals();
-        showToast('BOOSTED! +10,000 HP ⚡');
+        await conn.confirmTransaction({signature, blockhash, lastValidBlockHeight},'confirmed');
         if(window.audioBoost) window.audioBoost.play();
+        currentHP = newHp;
+        await window.saveHP(vid, currentHP);
+        await window.saveInteraction(vid, addr, 'boost', signature);
+        updateVisuals();
+        showToast('BOOST! +10,000 HP ⚡');
     } catch(e) {
-        showToast(e.message?.includes('User rejected')?'BOOST CANCELED':'ERROR: Check SOL balance',true);
-    } finally {
-        if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');}
-    }
+        showToast(e.message?.includes('User rejected')?'BOOST CANCELED':'BOOST FAILED: '+e.message,true);
+    } finally { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} }
 };
 
 // ==============================================
@@ -639,50 +721,42 @@ window.fanBoost = async () => {
 // ==============================================
 window.voraxBite = async () => {
     const provider = window.solana || window.phantom?.solana;
+    if(!provider?.publicKey) return showToast('CONNECT WALLET! 🔌',true);
     if(!await window.checkShrkGate(provider)) return;
-    const vid  = currentVideo().id;
-    const addr = provider.publicKey.toString();
-    const already = await window.hasInteracted(vid, addr, 'eat');
-    if(already) return showToast('ONLY 1 BITE PER VIDEO 🦈',true);
     document.getElementById('eat-confirm-overlay').classList.remove('hidden');
 };
 window.hideEatModal = () => document.getElementById('eat-confirm-overlay').classList.add('hidden');
 
 window.confirmPredatorEat = async () => {
-    const video   = document.getElementById('main-video');
-    const vid     = currentVideo().id;
+    const video = document.getElementById('main-video');
     document.getElementById('eat-confirm-overlay').classList.add('hidden');
+    const provider = window.solana || window.phantom?.solana;
     try {
-        const provider = window.solana || window.phantom?.solana;
-        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const total      = usdToLamports(0.02);
-        const toCreator  = Math.floor(total*0.30);
-        const toPlatform = total - toCreator;
-
-        showToast('EAT 💀 '+(0.02/window.solPriceUSD).toFixed(5)+' SOL');
-        const tx = await buildSplitTx(provider, conn, [
-            {to:new window.solanaWeb3.PublicKey(creatorWallet()), lamports:toCreator},
-            {to:new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports:toPlatform},
-        ]);
+        const vid  = currentVideo().id;
+        const addr = provider.publicKey.toString();
+                if(!await checkSolBalance(provider, 0.02)) return;
+        const { splits, newHp } = await voraxAction('eat', vid, addr);
+        showToast('CHOMP: '+(0.02/window.solPriceUSD).toFixed(5)+' SOL 🩸');
+        const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
+        const {blockhash} = await conn.getLatestBlockhash();
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
         const {signature} = await provider.signAndSendTransaction(tx);
         await conn.confirmTransaction(signature,'confirmed');
-
         if(window.audioBite) window.audioBite.play();
-        currentHP = Math.max(0, currentHP-200);
+        currentHP = newHp;
         await window.saveHP(vid, currentHP);
-        await window.saveInteraction(vid, provider.publicKey.toString(), 'eat', signature, toCreator);
-
+        await window.saveInteraction(vid, addr, 'eat', signature);
         showToast('SIGNAL ATTACKED! -200 HP 🩸',true);
         const flash = document.createElement('div');
         flash.className='fixed inset-0 z-[9999] pointer-events-none bg-red-600/60 transition-opacity duration-500';
         document.body.appendChild(flash);
         if(video) video.classList.add('bite-effect');
         setTimeout(()=>{flash.style.opacity='0';if(video)video.classList.remove('bite-effect');setTimeout(()=>flash.remove(),500);},300);
-
         updateVisuals();
-        checkVideoKill(vid);
     } catch(e) {
-        showToast(e.message?.includes('User rejected')?'ATTACK ABORTED':'ERROR: Check SOL balance',true);
+        showToast(e.message?.includes('ONLY')||e.message?.includes('already')?'ONLY 1 BITE PER VIDEO 🦈':e.message?.includes('User rejected')?'ATTACK ABORTED':'ERROR: '+e.message,true);
     }
 };
 
@@ -712,46 +786,28 @@ window.confirmReportAttack = async () => {
     const provider   = window.solana || window.phantom?.solana;
     const vid        = currentVideo().id;
     const userWallet = provider?.publicKey?.toString() || 'anon';
-    const alreadyReported = await window.hasInteracted(vid, userWallet, 'report');
-    if(alreadyReported) return showToast('ALREADY REPORTED THIS VIDEO ⚖️', true);
     window.hideReportSheet();
     try {
-        const conn  = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const total = usdToLamports(0.09);
-        showToast('REPORT ⚖️ '+(0.09/window.solPriceUSD).toFixed(5)+' SOL');
-        const tx = await buildSplitTx(provider, conn, [{to:new window.solanaWeb3.PublicKey(JUSTICE_WALLET),lamports:total}]);
+                if(!await checkSolBalance(provider, 0.09)) return;
+        const { splits } = await voraxAction('report', vid, userWallet);
+        showToast('JUDGMENT: '+(0.09/window.solPriceUSD).toFixed(5)+' SOL → Limbo ⚖️');
+        const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
+        const {blockhash} = await conn.getLatestBlockhash();
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
         const {signature} = await provider.signAndSendTransaction(tx);
         await conn.confirmTransaction(signature,'confirmed');
-
-        await window.saveInteraction(vid, userWallet, 'report', signature, total, window.selectedReportCategory);
-
-        // Aggiorna limbo fund per questo video
-        const solAmount = total/window.solanaWeb3.LAMPORTS_PER_SOL;
-        await db.from('limbo_fund').upsert({
-            video_id: vid,
-            total_sol: solAmount,
-            reporter_count: 1,
-        }, { onConflict: 'video_id' });
-        // Incrementa se esiste già (Supabase non supporta increment diretto senza RPC, usiamo una re-lettura)
-        try {
-            const {data:lf} = await db.from('limbo_fund').select('total_sol,reporter_count').eq('video_id',vid).single();
-            if(lf) await db.from('limbo_fund').update({total_sol: (lf.total_sol||0)+solAmount, reporter_count: (lf.reporter_count||0)+1}).eq('video_id',vid);
-        } catch(e){}
-
-        currentHP = Math.max(0, currentHP-400);
-        await window.saveHP(vid, currentHP);
-        showToast('CONDEMNED! -400 HP 🛑',true);
-
+        await window.saveInteraction(vid, userWallet, 'report', signature, 0, window.selectedReportCategory);
         const flash = document.createElement('div');
         flash.className='fixed inset-0 z-[9999] pointer-events-none bg-zinc-200/60 transition-opacity duration-500';
         document.body.appendChild(flash);
         setTimeout(()=>{flash.style.opacity='0';setTimeout(()=>flash.remove(),500);},300);
-
         updateVisuals();
-        updateJusticeDisplay();
+        showToast('REPORTED! ⚖️');
         checkVideoKill(vid);
     } catch(e) {
-        showToast(e.message?.includes('User rejected')?'REPORT ABORTED':'ERROR: Check SOL balance',true);
+        showToast(e.message?.includes('ALREADY')||e.message?.includes('already')?'ALREADY REPORTED 🦈':e.message?.includes('User rejected')?'REPORT ABORTED':'ERROR: '+e.message,true);
     }
 };
 
@@ -768,7 +824,7 @@ async function checkVideoKill(vid) {
         const reports = counts.filter(r=>r.action==='report').length;
         if(reports/total >= REPORT_THRESHOLD) {
             isBanned = true; currentHP = 0;
-            await db.from('videos').update({is_banned:true, hp:0}).eq('id', vid);
+            await dbWrite('banVideo', { videoId: vid });
             const {data:lf} = await db.from('limbo_fund').select('total_sol,reporter_count').eq('video_id',vid).single();
             const limboSol = lf?.total_sol||0;
             const repCount = lf?.reporter_count||reports;
@@ -793,25 +849,28 @@ window.reviveVideo = async () => {
     const orig = btn.innerHTML;
     btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin text-4xl"></i>';
     try {
-        const conn   = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-        const lamports = Math.ceil(2.99 / window.solPriceUSD * 1e9);
-        showToast('REVIVE 💚 '+(2.99/window.solPriceUSD).toFixed(5)+' SOL');
-        const tx = await buildSplitTx(provider, conn, [{to: new window.solanaWeb3.PublicKey(PLATFORM_WALLET), lamports}]);
+        const vid  = currentVideo().id;
+        const addr = provider.publicKey.toString();
+                if(!await checkSolBalance(provider, 2.99)) { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} return; }
+        const { splits, newHp } = await voraxAction('revive', vid, addr);
+        showToast('REVIVING: '+(2.99/window.solPriceUSD).toFixed(5)+' SOL 💚');
+        const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
+        const tx = new window.solanaWeb3.Transaction();
+        splits.forEach(s=>{ if(s.lamports>0) tx.add(window.solanaWeb3.SystemProgram.transfer({fromPubkey:provider.publicKey,toPubkey:new window.solanaWeb3.PublicKey(s.to),lamports:s.lamports})); });
         const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = provider.publicKey;
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize());
-        await conn.confirmTransaction(sig,'confirmed');
-        const vid = currentVideo().id;
-        await db.from('videos').update({hp: 90000, last_tick: new Date().toISOString()}).eq('id', vid);
-        await window.loadFeed();
-        showToast('VIDEO REVIVED! 💚 +90,000 HP');
+        tx.recentBlockhash=blockhash; tx.feePayer=provider.publicKey;
+        const {signature} = await provider.signAndSendTransaction(tx);
+        await conn.confirmTransaction(signature,'confirmed');
+        currentHP = newHp; isBanned = false;
+        await dbWrite('saveHP', { videoId: vid, hp: 90000 });
+        updateVisuals();
+        document.getElementById('signal-lost-overlay').classList.add('hidden');
+        const v = document.getElementById('main-video');
+        if(v) v.play();
+        showToast('SIGNAL REVIVED! +90,000 HP ⚡🦈');
     } catch(e) {
-        showToast('REVIVE FAILED ❌ '+e.message, true);
-    } finally {
-        btn.disabled=false; btn.innerHTML=orig;
-    }
+        showToast(e.message?.includes('User rejected')?'CANCELED 🦈':'ERROR: '+e.message,true);
+    } finally { btn.disabled=false; btn.innerHTML=orig; }
 }
 
 
@@ -839,43 +898,46 @@ window.giveLike = async () => {
 // ==============================================
 window.shareContent = async () => {
     const provider = window.solana || window.phantom?.solana;
+    if(!provider) return showToast('PHANTOM NOT FOUND! 🛑', true);
+
+    // Step 1: force wallet open via connect()
+    if(!provider.publicKey) {
+        try {
+            await provider.connect();
+        } catch(e) {
+            return showToast('CONNECTION REJECTED ❌', true);
+        }
+    }
+
+    // Step 2: sign a 0-lamport message to confirm identity (no SOL spent)
+    try {
+        const msg = new TextEncoder().encode('VORAX REPOST — ' + currentVideo().id);
+        await provider.signMessage(msg, 'utf8');
+    } catch(e) {
+        return showToast('SIGNATURE REJECTED ❌', true);
+    }
+
+    // Step 3: gate check
+    if(!await window.checkShrkGate(provider)) return;
 
     const vid  = currentVideo().id;
+    const addr = provider.publicKey.toString();
+
+    // Update wallet UI
+    window._walletConnected = true;
+    window._walletPubkey = provider.publicKey;
+    document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+    document.getElementById('wallet-text').innerText = addr.slice(0,4)+'...'+addr.slice(-4);
 
     try {
-        // 1 lamport simbolico — forza apertura Phantom e connette il wallet
-        const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
-        const tx = new window.solanaWeb3.Transaction().add(
-            window.solanaWeb3.SystemProgram.transfer({
-                fromPubkey: provider.publicKey,
-                toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
-                lamports:   1,
-            })
-        );
-        const {blockhash} = await conn.getLatestBlockhash();
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = provider.publicKey;
-        const {signature} = await provider.signAndSendTransaction(tx);
-        await conn.confirmTransaction(signature, 'confirmed');
-
-        // Ora il wallet è connesso — verifica $SHRK
-        const ok = await window.checkShrkGate(provider);
-        if(!ok) return;
-
-        const addr = provider.publicKey.toString();
-
-        // Save repost — inherits current HP of original video
-        const currentHp = currentVideo().hp || currentHP;
-        await db.from('reposts').upsert({
+        await dbWrite('saveRepost', {
             video_id: vid,
             reposter_wallet: addr,
             original_creator_wallet: creatorWallet(),
-        }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
-
-        showToast('REPOSTED! 🔁 You earn 10% from every interaction on your repost 🦈');
+        });
+        showToast('REPOSTED! 🔁 You earn 10% from every interaction 🦈');
     } catch(e) {
-        console.error('Repost error:', e);
-        showToast(e.message?.includes('User rejected') ? 'REPOST CANCELED' : 'ERROR: Repost failed', true);
+        showToast('REPOST FAILED ❌', true);
     }
 };
 
@@ -929,22 +991,37 @@ window.publishRealContent = () => {
 
 window.executeUploadProtocol = async () => {
     document.getElementById('upload-confirm-overlay').classList.add('hidden');
-    const file    = document.getElementById('new-video-file')?.files[0];
-    const creator = document.getElementById('new-video-creator').value;
-    const ca      = document.getElementById('new-video-ca').value;
+    const file     = document.getElementById('new-video-file')?.files[0];
     const provider = window.solana||window.phantom?.solana;
-    if(!file||!creator||!ca||!provider?.publicKey) return showToast('Dati mancanti ⚠️',true);
+    if(!file||!provider?.publicKey) return showToast('Missing data ⚠️', true);
+
+    const walletAddr = provider.publicKey.toString();
+
+    // Look up or register username
+    let creator = '';
+    const { data: profile } = await db.from('videos')
+        .select('creator').eq('creator_wallet', walletAddr).limit(1).single();
+    if(profile?.creator) {
+        // Use existing username
+        creator = profile.creator;
+    } else {
+        // First upload — require username
+        creator = document.getElementById('new-video-creator').value.trim();
+        if(!creator) return showToast('Set your @username first! ⚠️', true);
+        if(!creator.startsWith('@')) creator = '@' + creator;
+    }
+    const ca = walletAddr;
 
     try {
         // STEP 1: Platform fee (only when UPLOAD_FEE_ENABLED)
-        const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
+        const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
         if(UPLOAD_FEE_ENABLED) {
             showToast('STEP 1/3: PLATFORM FEE... 🦈');
             const feeLamports = usdToLamports(0.01);
             const feeTx = new window.solanaWeb3.Transaction().add(
                 window.solanaWeb3.SystemProgram.transfer({
                     fromPubkey: provider.publicKey,
-                    toPubkey:   new window.solanaWeb3.PublicKey(PLATFORM_WALLET),
+                    toPubkey:   new window.solanaWeb3.PublicKey('7j7KEbQ9Qm9rZJGN8hD3TGowZmta8eFwmZEBVmpqvnoD'),
                     lamports:   feeLamports,
                 })
             );
@@ -986,7 +1063,7 @@ window.executeUploadProtocol = async () => {
         // STEP 3: Salva su Supabase
         showToast('STEP 3/3: SAVING ON-CHAIN... 🗄️');
         const newId = 'video_'+Date.now();
-        await db.from('videos').insert({
+        await dbWrite('insertVideo', {
             id:             newId,
             creator:        creator,
             creator_wallet: ca,
@@ -994,6 +1071,8 @@ window.executeUploadProtocol = async () => {
             dna_hash:       window.pendingVideoHash || null,
             hp:             MAX_HP,
         });
+        // Start 9-day claim countdown from upload
+        await dbWrite('initTreasury', { wallet: ca });
 
         // Aggiorna feed locale
         const nv = {id:newId,creator,ca,src:link,dna:window.pendingVideoHash,hp:MAX_HP};
@@ -1011,11 +1090,187 @@ window.executeUploadProtocol = async () => {
         console.error('Message:', e.message);
         console.error('Stack:', e.stack);
         console.error('Full error:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
-        showToast('ERRORE: '+(e.message||'Upload fallito'),true);
+        showToast('ERROR: '+(e.message||'Upload failed'), true);
+    }
+};
+
+window.openCreatorProfile = async () => {
+    // Make sure placeholder is hidden
+    const ph = document.getElementById('placeholder');
+    if(ph && !ph.classList.contains('hidden')) return; // not entered yet
+    const vid = currentVideo();
+    const creatorName = document.getElementById('creator-name').innerText;
+    const creatorWal = feedData[currentFeedIndex]?.ca || vid?.ca || '';
+
+
+    const overlay = document.getElementById('creator-profile-overlay');
+    const cpUsername = document.getElementById('cp-username');
+    const cpWallet = document.getElementById('cp-wallet');
+    const cpStats = document.getElementById('cp-stats');
+    const cpVideos = document.getElementById('cp-videos');
+
+    cpUsername.innerText = creatorName;
+    cpWallet.innerText = creatorWal ? creatorWal.slice(0,6)+'...'+creatorWal.slice(-4) : '';
+    cpStats.innerHTML = '<p class="text-zinc-500 text-[9px] col-span-2 text-center">Loading...</p>';
+    cpVideos.innerHTML = '';
+    overlay.classList.remove('hidden');
+
+    try {
+        // Load all videos by this creator
+        let videosQuery = db.from('videos')
+            .select('id, creator, hp, src, created_at')
+            .eq('is_banned', false)
+            .order('hp', { ascending: false });
+        if(creatorWal) {
+            videosQuery = videosQuery.eq('creator_wallet', creatorWal);
+        } else {
+            videosQuery = videosQuery.eq('creator', creatorName);
+        }
+        const { data: videos } = await videosQuery;
+
+        // Load interactions stats
+        const { data: interactions } = await db.from('interactions')
+            .select('action, video_id')
+            .in('video_id', (videos||[]).map(v => v.id));
+
+        const boosts = interactions?.filter(i => i.action === 'boost').length || 0;
+        const eats   = interactions?.filter(i => i.action === 'eat').length || 0;
+        const totalHP = (videos||[]).reduce((sum, v) => sum + (v.hp||0), 0);
+
+        cpStats.innerHTML = \`
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-white font-black text-lg">\${(videos||[]).length}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Videos</p>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-yellow-400 font-black text-lg">\${boosts}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Total Boosts ⚡</p>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-red-400 font-black text-lg">\${eats}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Total Eats 💀</p>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-3 text-center border border-zinc-800">
+                <p class="text-blue-400 font-black text-lg">\${Math.floor(totalHP).toLocaleString()}</p>
+                <p class="text-zinc-500 text-[8px] uppercase">Total HP</p>
+            </div>
+        \`;
+
+        if(!videos || videos.length === 0) {
+            cpVideos.innerHTML = '<p class="text-zinc-600 text-[9px] text-center py-4">No videos yet</p>';
+            return;
+        }
+
+        cpVideos.innerHTML = videos.map(v => {
+            const hpPct = Math.min(100, (v.hp / 90000) * 100);
+            const hpColor = v.hp > 60000 ? 'bg-green-500' : v.hp > 30000 ? 'bg-yellow-500' : 'bg-red-500';
+            const date = new Date(v.created_at).toLocaleDateString();
+            return \`
+            <div class="bg-zinc-900 rounded-xl p-3 border border-zinc-800 cursor-pointer active:opacity-70"
+                 onclick="window.playCreatorVideo('\${v.id}')">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-white text-[10px] font-bold">\${v.id}</span>
+                    <span class="text-zinc-500 text-[8px]">\${date}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 h-1 bg-zinc-800 rounded-full">
+                        <div class="\${hpColor} h-1 rounded-full" style="width:\${hpPct}%"></div>
+                    </div>
+                    <span class="text-[9px] text-blue-400 font-mono">\${Math.floor(v.hp).toLocaleString()} HP</span>
+                </div>
+            </div>\`;
+        }).join('');
+
+    } catch(e) {
+        cpVideos.innerHTML = '<p class="text-zinc-600 text-[9px] text-center py-4">Error loading profile</p>';
+    }
+};
+
+window.playCreatorVideo = (videoId) => {
+    const idx = feedData.findIndex(v => v.id === videoId);
+    if(idx >= 0) {
+        currentFeedIndex = idx;
+        const cur = feedData[idx];
+        currentHP = cur.hp || 90000;
+        document.getElementById('main-video').src = cur.src;
+        document.getElementById('main-video').play();
+        document.getElementById('creator-name').innerText = cur.creator;
+        updateVisuals();
+    }
+    document.getElementById('creator-profile-overlay').classList.add('hidden');
+};
+
+window.incrementView = (videoId) => {
+    try {
+        const idx = feedData.findIndex(v => v.id === videoId);
+        if(idx >= 0) feedData[idx].views = (feedData[idx].views || 0) + 1;
+        const vc = document.getElementById('view-count');
+        if(vc){ const n = feedData[idx]?.views||0; vc.innerText = n>=1000?(n/1000).toFixed(1)+'K':n; }
+        dbWrite('incrementView', { videoId }).catch(()=>{});
+    } catch(e) {}
+};
+
+window.loadJusticeLeaderboard = async () => {
+    const el = document.getElementById('justice-leaderboard');
+    if(!el) return;
+    try {
+        const { data } = await db.from('justice_hunters')
+            .select('wallet, username, points')
+            .order('points', { ascending: false })
+            .limit(10);
+        if(!data || data.length === 0) {
+            el.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-2">No hunters yet — be the first ⚖️</p>';
+            return;
+        }
+        const prizes = [280000, 200000, 150000, 100000, 80000, 60000, 50000, 40000, 25000, 15000];
+        const medals = ['🥇','🥈','🥉','4','5','6','7','8','9','10'];
+        // Handle ties — cascade prize upward
+        let rows = data.map((h, i) => ({ ...h, rank: i + 1, prize: prizes[i] || 0 }));
+        // Find ties and redistribute
+        for(let i = 0; i < rows.length - 1; i++) {
+            if(rows[i].points === rows[i+1].points) {
+                // Find all tied at this rank
+                let tieEnd = i;
+                while(tieEnd + 1 < rows.length && rows[tieEnd+1].points === rows[i].points) tieEnd++;
+                const tieCount = tieEnd - i + 1;
+                // Sum prizes for all tied positions + skipped positions below
+                let totalPrize = 0;
+                for(let j = i; j <= Math.min(tieEnd + (tieCount - 1), prizes.length - 1); j++) {
+                    totalPrize += prizes[j] || 0;
+                }
+                const sharedPrize = Math.floor(totalPrize / tieCount);
+                for(let j = i; j <= tieEnd; j++) rows[j].prize = sharedPrize;
+                i = tieEnd;
+            }
+        }
+        el.innerHTML = rows.map((h, i) => `
+            <div class="flex items-center justify-between py-1 border-b border-zinc-800/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] w-4">${medals[i]||i+1}</span>
+                    <span class="text-[9px] text-white">${h.username||h.wallet.slice(0,6)+'...'}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] text-yellow-400 font-black">${h.points} pts</span>
+                    <span class="text-[7px] text-zinc-600 ml-1">${h.prize.toLocaleString()} SHRK</span>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        el.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-2">Could not load leaderboard</p>';
     }
 };
 
 window.addEventListener('load',()=>{
+    const ph = document.getElementById('placeholder');
+    if(ph) {
+        ph.addEventListener('click', function handler() {
+            ph.removeEventListener('click', handler);
+            window.startProtocol();
+        });
+    }
+
+    window.loadJusticeLeaderboard();
+    if(window._walletPubkey) window.updatePoolDisplay();
     const btn=document.getElementById('btn-confirm-upload');
     if(btn) btn.onclick=window.executeUploadProtocol;
 });
@@ -1023,50 +1278,69 @@ window.addEventListener('load',()=>{
 // ==============================================
 // CREATOR TREASURE / CLAIM
 // ==============================================
-window.updatePoolDisplay = () => {
-    const ca = creatorWallet();
-    const tb = parseFloat(localStorage.getItem('tb_'+ca))||0;
-    const te = parseFloat(localStorage.getItem('te_'+ca))||0;
-    const tot = tb+te;
-    const d=document.getElementById('creator-shrk-display'); if(d) d.innerText=tot.toFixed(5);
-    const b=document.getElementById('treasure-boost'); if(b) b.innerText=tb.toFixed(5)+' SOL';
-    const e=document.getElementById('treasure-eat');   if(e) e.innerText=te.toFixed(5)+' SOL';
+window.updatePoolDisplay = async () => {
+    const addr = window._walletPubkey?.toString();
+    if(!addr) return;
+    try {
+        const { data } = await db.from('creator_treasury')
+            .select('balance_sol, total_earned_sol, last_claim_at')
+            .eq('wallet', addr)
+            .single();
+        const bal = data?.balance_sol || 0;
+        const tot = data?.total_earned_sol || 0;
+        const d = document.getElementById('creator-shrk-display'); if(d) d.innerText = bal.toFixed(5);
+        const b = document.getElementById('treasure-boost'); if(b) b.innerText = bal.toFixed(5)+' SOL';
+        const e = document.getElementById('treasure-eat');   if(e) e.innerText = 'Total earned: '+tot.toFixed(5)+' SOL';
 
-    const THREE_DAYS = 72*60*60*1000;
-    let last = parseInt(localStorage.getItem('lc_'+ca));
-    const now = Date.now();
-    if(!last){last=now;localStorage.setItem('lc_'+ca,last);}
-    const left = THREE_DAYS-(now-last);
-    const btn  = document.getElementById('claim-btn-treasure');
-    const tmr  = document.getElementById('claim-timer-display');
-    if(left<=0 && tot>0){
-        if(btn){btn.disabled=false;btn.innerText='CLAIM REWARDS';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer border-none';}
-        if(tmr){tmr.innerText='READY FOR HARVEST 🦈';tmr.className='text-center text-[10px] text-emerald-400 mt-3 uppercase font-bold animate-pulse';}
-    } else {
-        if(btn){btn.disabled=true;btn.innerText='CLAIM LOCKED';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5';}
-        const h=Math.floor(Math.max(0,left)/(1000*60*60));
-        const m=Math.floor((Math.max(0,left)%(1000*60*60))/(1000*60));
-        if(tmr) tmr.innerText = tot>0 ? 'LOCKED: '+h+'H '+m+'M' : 'NO FUNDS YET';
+        const NINE_DAYS = 9*24*60*60*1000;
+        const lastClaim = data?.last_claim_at ? new Date(data.last_claim_at).getTime() : null;
+        const now = Date.now();
+        const left = lastClaim === null ? -1 : NINE_DAYS - (now - lastClaim);
+        const btn = document.getElementById('claim-btn-treasure');
+        const tmr = document.getElementById('claim-timer-display');
+        if(left <= 0 && bal > 0) {
+            if(btn){btn.disabled=false;btn.innerText='CLAIM '+bal.toFixed(4)+' SOL';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer border-none';}
+            if(tmr){tmr.innerText='READY FOR HARVEST 🦈';tmr.className='text-center text-[10px] text-emerald-400 mt-3 uppercase font-bold animate-pulse';}
+        } else {
+            if(btn){btn.disabled=true;btn.innerText='CLAIM LOCKED';btn.className='w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5';}
+            const h = Math.floor(Math.max(0,left)/(1000*60*60));
+            const m = Math.floor((Math.max(0,left)%(1000*60*60))/(1000*60));
+            if(tmr) tmr.innerText = bal <= 0 ? 'NO FUNDS YET' : 'LOCKED: '+h+'H '+m+'M';
+        }
+    } catch(e) {
+        console.warn('Treasury load failed:', e);
     }
 };
 
-window.claimCreatorFunds = () => {
-    const ca  = creatorWallet();
-    const tot = (parseFloat(localStorage.getItem('tb_'+ca))||0)+(parseFloat(localStorage.getItem('te_'+ca))||0);
-    if(tot<=0) return showToast('TREASURE EMPTY 🦈',true);
-    showToast('CLAIMING '+tot.toFixed(5)+' SOL... ⚡');
-    setTimeout(()=>{
-        localStorage.setItem('lc_'+ca,Date.now());
-        localStorage.setItem('tb_'+ca,0); localStorage.setItem('te_'+ca,0);
-        updatePoolDisplay();
-        showToast('BOUNTY SECURED! 🟢 (On-chain claim coming soon)');
-    },1500);
-};
+window.claimCreatorFunds = async () => {
+    const addr = window._walletPubkey?.toString();
+    if(!addr) return showToast('CONNECT WALLET FIRST 🦈', true);
 
-window.updateJusticeDisplay = () => {
-    const el=document.getElementById('foundation-total-display');
-    if(el) el.innerText=(parseFloat(localStorage.getItem('justice_total'))||0).toFixed(4);
-};
+    const btn = document.getElementById('claim-btn-treasure');
+    if(btn) { btn.disabled = true; btn.innerText = 'PROCESSING...'; }
+
+    try {
+        const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-claim', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON,
+                'Authorization': 'Bearer ' + SUPABASE_ANON,
+            },
+            body: JSON.stringify({ wallet: addr }),
+        });
+        const data = await res.json();
+        if(!data.ok) return showToast(data.error || 'CLAIM FAILED ❌', true);
+        showToast('BOUNTY SECURED! 🟢 '+data.amount_sol.toFixed(4)+' SOL sent! Sig: '+data.signature.slice(0,8)+'...');
+        await window.updatePoolDisplay();
+    } catch(e) {
+        showToast('CLAIM ERROR ❌ '+e.message, true);
+    } finally {
+        if(btn) { btn.disabled = false; }
+    }
+};;;
+
+window.updateJusticeDisplay = () => {}; // deprecated — treasury now on Supabase
 
 // ==============================================
 // UPDATE VISUALS
@@ -1109,8 +1383,8 @@ window.updateVisuals = () => {
     }
     // Sopra 30.000 HP → video perfetto, nessun filtro
 
-    const vc=document.getElementById('view-count');
-    if(vc){const cv=feedData[currentFeedIndex];const n=cv?.views||0;vc.innerText=n>=1000?(n/1000).toFixed(1)+'K':n;}
+    const vc = document.getElementById('view-count');
+    if(vc) { const cur = feedData[currentFeedIndex]; vc.innerText = cur?.views >= 1000 ? (cur.views/1000).toFixed(1)+'K' : (cur?.views||0); }
     if(hpText){
         hpText.innerText = currentHP>=100000?Math.floor(currentHP/1000)+'K':currentHP.toFixed(0);
         // Testo HP diventa giallo a giorno 6, rosso a giorno 7
@@ -1154,6 +1428,22 @@ setInterval(()=>{
 // ==============================================
 // WALLET CONNECT
 // ==============================================
+window.updateUploadWalletUI = async (addr) => {
+    const el = document.getElementById('upload-wallet-addr');
+    if(el) el.innerText = addr.slice(0,6)+'...'+addr.slice(-4);
+    const caField = document.getElementById('new-video-ca');
+    if(caField) caField.value = addr;
+    // Check if user already has a username
+    const { data: profile } = await db.from('videos')
+        .select('creator').eq('creator_wallet', addr).limit(1).single();
+    const usernameRow = document.getElementById('upload-username-row');
+    const creatorInput = document.getElementById('new-video-creator');
+    if(profile?.creator) {
+        if(creatorInput) creatorInput.value = profile.creator;
+        if(usernameRow) usernameRow.innerHTML = '<p class="text-[10px] text-green-400 text-center py-1">👤 '+profile.creator+' <span class=\'text-zinc-600\'>(permanent)</span></p>';
+    }
+};
+
 window.connectWallet = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if(isMobile && !window.solana){
@@ -1176,15 +1466,23 @@ window.connectWallet = async () => {
         try {
             const resp = await window.solana.connect();
             const pk   = resp.publicKey;
-            const conn = new window.solanaWeb3.Connection(RPC_URL,'confirmed');
-            const bal  = await conn.getBalance(pk);
-            document.getElementById('wallet-text').innerText=(bal/1e9).toFixed(2)+' SOL | '+pk.toString().slice(0,4)+'...';
-            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
             window._walletConnected = true;
             window._walletPubkey = pk;
-            showToast('Synced with Solana 🦈');
-        } catch { showToast('CONNESSIONE FALLITA',true); }
-    } else { alert('Phantom Wallet non trovato! (Usa Chrome + estensione)'); }
+            document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            document.getElementById('wallet-text').innerText = pk.toString().slice(0,4)+'...'+pk.toString().slice(-4);
+            showToast('WALLET CONNECTED! 🦈');
+            window.updateUploadWalletUI(pk.toString());
+            // Load balance async (non-blocking)
+            try {
+                const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
+                const bal  = await conn.getBalance(pk);
+                document.getElementById('wallet-text').innerText=(bal/1e9).toFixed(3)+' SOL | '+pk.toString().slice(0,4)+'...';
+            } catch(balErr) { /* balance fetch failed, wallet still connected */ }
+        } catch(e) {
+            if(e.message?.includes('rejected') || e.code === 4001) showToast('CONNECTION REJECTED ❌', true);
+            else showToast('CONNECTION FAILED ❌', true);
+        }
+    } else { showToast('PHANTOM NOT FOUND! Install Chrome extension 🔌', true); }
 };
 
 // ==============================================
@@ -1254,7 +1552,7 @@ window.loadProfile = async () => {
     const short = addr.slice(0,4)+'...'+addr.slice(-4);
 
     // Carica tutto in parallelo
-    const conn = new window.solanaWeb3.Connection(RPC_URL, 'confirmed');
+    const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
     const [solBal, videosRes, repostsRes] = await Promise.all([
         conn.getBalance(pubkey),
         db.from('videos').select('id, creator, hp').eq('creator_wallet', addr).order('created_at', {ascending: false}).limit(10),
@@ -1302,10 +1600,11 @@ window.toggleDevMenu = () => {
     } else { m.classList.add('hidden');m.classList.remove('flex'); }
 };
 window.startProtocol = async () => {
-    updateOraclePrice();
     const ph=document.getElementById('placeholder');
+    if(ph && ph.classList.contains('hidden')) return; // already started
+    updateOraclePrice();
     if(ph) ph.style.opacity='0';
-    showToast('CARICAMENTO FEED... 🌐');
+    showToast('LOADING FEED... 🌐');
     await window.loadFeed();
     const v=document.getElementById('main-video');
     if(v&&feedData.length){
@@ -1316,7 +1615,7 @@ window.startProtocol = async () => {
     }
     updateVisuals();
     showToast('PROTOCOL ONLINE 🦈');
-    setTimeout(()=>{if(ph)ph.classList.add('hidden');},500);
+    setTimeout(()=>{ if(ph){ ph.classList.add('hidden'); ph.style.zIndex='-1'; ph.style.pointerEvents='none'; } },500);
 };
 
 // ==============================================
@@ -1383,5 +1682,33 @@ window.addEventListener('load', async ()=>{
         </div>
     </div>
 
+    <!-- CREATOR PROFILE OVERLAY -->
+    <div id="creator-profile-overlay" class="fixed inset-0 z-[300] bg-black flex flex-col hidden">
+        <div class="flex items-center justify-between p-4 border-b border-zinc-800">
+            <button onclick="document.getElementById('creator-profile-overlay').classList.add('hidden')" class="text-zinc-400 text-xl">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="text-center">
+                <h2 id="cp-username" class="text-white font-black text-sm tracking-widest"></h2>
+                <p id="cp-wallet" class="text-zinc-500 text-[9px]"></p>
+            </div>
+            <div class="w-6"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="cp-stats" class="grid grid-cols-2 gap-3 mb-6"></div>
+            <h3 class="text-[10px] font-black text-zinc-400 tracking-widest uppercase mb-3">📹 Videos</h3>
+            <div id="cp-videos" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <script>
+    if('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        });
+    }
+    </script>
 </body>
 </html>
