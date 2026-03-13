@@ -497,26 +497,18 @@ window.loadFeed = async () => {
 // Salva HP su Supabase (con fallback localStorage)
 window.saveHP = async (videoId, hp) => {
     try {
-        await db.from('videos').update({ hp, last_tick: new Date().toISOString() }).eq('id', videoId);
+        await dbWrite('saveHP', { videoId, hp });
     } catch(e) {
-        localStorage.setItem('hp_'+videoId, hp); // fallback
+        localStorage.setItem('hp_'+videoId, hp);
     }
 };
 
 // Registra un'interazione su Supabase
 window.saveInteraction = async (videoId, wallet, action, txSignature='', lamports=0, category=null) => {
     try {
-        await db.from('interactions').upsert({
-            video_id: videoId,
-            wallet,
-            action,
-            category,
-            tx_signature: txSignature,
-            lamports,
-        }, { onConflict: 'video_id,wallet,action', ignoreDuplicates: false });
+        await dbWrite('saveInteraction', { videoId, wallet, action, txSignature, lamports, category });
     } catch(e) {
-        
-        localStorage.setItem(action+'_'+wallet+'_'+videoId, 'true');
+        console.warn('saveInteraction failed:', e);
     }
 };
 
@@ -618,6 +610,21 @@ window.checkShrkGate = async (provider) => {
     } catch(e) { showToast('GATE CHECK FAILED ❌', true); return false; }
 };
 
+
+// Helper: all DB writes go through vorax-db edge function (RLS safe)
+async function dbWrite(op, payload) {
+    const res = await fetch('https://mfdzlcfygbnpvmswjqdx.supabase.co/functions/v1/vorax-db', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': 'Bearer ' + SUPABASE_ANON,
+        },
+        body: JSON.stringify({ op, ...payload }),
+    });
+    return res.json();
+}
+
 async function checkSolBalance(provider, minUsd) {
     try {
         const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
@@ -670,6 +677,10 @@ window.fanBoost = async () => {
         const vid  = currentVideo().id;
         const addr = provider.publicKey.toString();
                 if(!await checkSolBalance(provider, 0.29)) { if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} return; }
+        // Check boost duplicate
+        const { data: existingBoost } = await db.from('interactions')
+            .select('id').eq('video_id', vid).eq('wallet', addr).eq('action', 'boost').single();
+        if(existingBoost) { showToast('ALREADY BOOSTED THIS VIDEO ⚡', true); if(btn){btn.disabled=false;btn.classList.remove('animate-pulse');} return; }
         const { splits, newHp } = await voraxAction('boost', vid, addr);
         showToast('BOOSTING: '+(0.29/window.solPriceUSD).toFixed(5)+' SOL ⚡');
         const conn = new window.solanaWeb3.Connection(TX_RPC, 'confirmed');
@@ -798,7 +809,7 @@ async function checkVideoKill(vid) {
         const reports = counts.filter(r=>r.action==='report').length;
         if(reports/total >= REPORT_THRESHOLD) {
             isBanned = true; currentHP = 0;
-            await db.from('videos').update({is_banned:true, hp:0}).eq('id', vid);
+            await dbWrite('banVideo', { videoId: vid });
             const {data:lf} = await db.from('limbo_fund').select('total_sol,reporter_count').eq('video_id',vid).single();
             const limboSol = lf?.total_sol||0;
             const repCount = lf?.reporter_count||reports;
@@ -836,7 +847,7 @@ window.reviveVideo = async () => {
         const {signature} = await provider.signAndSendTransaction(tx);
         await conn.confirmTransaction(signature,'confirmed');
         currentHP = newHp; isBanned = false;
-        await db.from('videos').update({hp:90000, last_tick:new Date().toISOString()}).eq('id', vid);
+        await dbWrite('saveHP', { videoId: vid, hp: 90000 });
         updateVisuals();
         document.getElementById('signal-lost-overlay').classList.add('hidden');
         const v = document.getElementById('main-video');
@@ -904,11 +915,11 @@ window.shareContent = async () => {
     document.getElementById('wallet-text').innerText = addr.slice(0,4)+'...'+addr.slice(-4);
 
     try {
-        await db.from('reposts').upsert({
+        await dbWrite('saveRepost', {
             video_id: vid,
             reposter_wallet: addr,
             original_creator_wallet: creatorWallet(),
-        }, { onConflict: 'video_id,reposter_wallet', ignoreDuplicates: true });
+        });
         showToast('REPOSTED! 🔁 You earn 10% from every interaction 🦈');
     } catch(e) {
         showToast('REPOST FAILED ❌', true);
@@ -1037,7 +1048,7 @@ window.executeUploadProtocol = async () => {
         // STEP 3: Salva su Supabase
         showToast('STEP 3/3: SAVING ON-CHAIN... 🗄️');
         const newId = 'video_'+Date.now();
-        await db.from('videos').insert({
+        await dbWrite('insertVideo', {
             id:             newId,
             creator:        creator,
             creator_wallet: ca,
