@@ -1109,8 +1109,8 @@ window.updateVisuals = () => {
     }
     // Sopra 30.000 HP → video perfetto, nessun filtro
 
-    const vc = document.getElementById('view-count');
-    if(vc){ const v = feedData[currentFeedIndex]; const n = v?.views||0; vc.innerText = n>=1000?(n/1000).toFixed(1)+'K':n; }
+    const vc=document.getElementById('view-count');
+    if(vc){const cv=feedData[currentFeedIndex];const n=cv?.views||0;vc.innerText=n>=1000?(n/1000).toFixed(1)+'K':n;}
     if(hpText){
         hpText.innerText = currentHP>=100000?Math.floor(currentHP/1000)+'K':currentHP.toFixed(0);
         // Testo HP diventa giallo a giorno 6, rosso a giorno 7
@@ -1341,6 +1341,7 @@ function handleSwipeDirection(dir){
     if(dir==='up') currentFeedIndex=(currentFeedIndex+1)%feedData.length;
     else currentFeedIndex=(currentFeedIndex-1+feedData.length)%feedData.length;
     const cur=feedData[currentFeedIndex];
+    // HP viene dal feed (già aggiornato da Supabase al caricamento)
     currentHP = cur.hp || MAX_HP;
     v.src=cur.src; v.muted=muted; v.play().catch(()=>{})
     document.getElementById('creator-name').innerText=cur.creator;
