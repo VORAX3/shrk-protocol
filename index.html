@@ -1150,9 +1150,9 @@ window.updatePoolDisplay = async () => {
         const e = document.getElementById('treasure-eat');   if(e) e.innerText = 'Total earned: '+tot.toFixed(5)+' SOL';
 
         const NINE_DAYS = 9*24*60*60*1000;
-        const lastClaim = data?.last_claim_at ? new Date(data.last_claim_at).getTime() : 0;
+        const lastClaim = data?.last_claim_at ? new Date(data.last_claim_at).getTime() : null;
         const now = Date.now();
-        const left = NINE_DAYS - (now - lastClaim);
+        const left = lastClaim === null ? -1 : NINE_DAYS - (now - lastClaim);
         const btn = document.getElementById('claim-btn-treasure');
         const tmr = document.getElementById('claim-timer-display');
         if(left <= 0 && bal > 0) {
