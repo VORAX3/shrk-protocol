@@ -161,10 +161,7 @@
             <h3 class="font-bold uppercase text-sm tracking-widest">Comments</h3>
             <button onclick="toggleComments()" class="p-2 text-2xl">&times;</button>
         </div>
-        <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center"><i class="fas fa-anchor text-white text-xs"></i></div><div><p class="text-xs font-bold text-blue-400">@CryptoWhale</p><p class="text-sm text-gray-200">L'ancora tiene! Hold the line! ⚓🚀</p></div></div>
-            <div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center"><i class="fas fa-fish text-white text-xs"></i></div><div><p class="text-xs font-bold text-red-400">@Predator_99</p><p class="text-sm text-gray-200">Appena morso! -200 HP 🔥🦈</p></div></div>
-        </div>
+        <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
         <div class="p-4 border-t border-zinc-800 bg-black flex gap-2 items-center pb-8">
             <input type="text" id="comment-input" placeholder="Add a comment..." class="flex-1 bg-zinc-900 rounded-full px-4 py-3 text-sm text-white outline-none">
             <button onclick="postComment()" class="text-blue-500 font-bold px-4">Post</button>
@@ -303,63 +300,6 @@
                 <button onclick="document.getElementById('upload-confirm-overlay').classList.add('hidden')" class="w-full py-3 text-[10px] font-bold text-zinc-600 uppercase">Cancel</button>
             </div>
         </div>
-        <!-- JUSTICE HUNTERS LEADERBOARD -->
-        <div class="mb-6 p-5 border border-yellow-500/30 rounded-2xl bg-yellow-900/10">
-            <h3 class="text-[10px] font-black mb-1 text-yellow-400 tracking-[0.2em] uppercase">⚖️ Justice Hunters</h3>
-            <p class="text-[8px] text-zinc-500 mb-4">Top reporters this month · Resets every 30th · 1,000,000 $SHRK prize pool</p>
-            <div id="justice-leaderboard">
-                <p class="text-[9px] text-zinc-600 text-center py-2">Loading...</p>
-            </div>
-            <div class="mt-3 border-t border-zinc-800 pt-3">
-                <p class="text-[8px] text-zinc-600 text-center">🏆 Prize distribution (parimerito divide)</p>
-                <div class="grid grid-cols-5 gap-1 mt-2 text-center">
-                    <div class="text-[7px] text-yellow-400">1st<br>280k</div>
-                    <div class="text-[7px] text-zinc-300">2nd<br>200k</div>
-                    <div class="text-[7px] text-zinc-400">3rd<br>150k</div>
-                    <div class="text-[7px] text-zinc-500">4th<br>100k</div>
-                    <div class="text-[7px] text-zinc-600">5th<br>80k</div>
-                </div>
-                <div class="grid grid-cols-5 gap-1 mt-1 text-center">
-                    <div class="text-[7px] text-zinc-600">6th<br>60k</div>
-                    <div class="text-[7px] text-zinc-600">7th<br>50k</div>
-                    <div class="text-[7px] text-zinc-600">8th<br>40k</div>
-                    <div class="text-[7px] text-zinc-600">9th<br>25k</div>
-                    <div class="text-[7px] text-zinc-600">10th<br>15k</div>
-                </div>
-            </div>
-        </div>
-
-  <!-- HOW IT WORKS -->
-        <div class="mb-6 p-5 border border-zinc-700/50 rounded-2xl bg-zinc-900/20">
-            <h3 class="text-[10px] font-black mb-5 text-white tracking-[0.2em] uppercase flex items-center gap-2"><i class="fas fa-book-open"></i> How It Works</h3>
-            <p class="text-white font-black text-xs mb-1">What is VORAX?</p>
-            <p class="text-[9px] text-zinc-400 leading-relaxed mb-4">Decentralized video platform on Solana. Every video has HP that decays over time. The community decides what survives.</p>
-            <div class="mb-4 p-3 bg-zinc-800/50 rounded-xl">
-                <p class="text-white font-black text-[9px] mb-2 uppercase tracking-widest">To Get Started</p>
-                <p class="text-[9px] text-zinc-300">✅ Phantom Wallet installed</p>
-                <p class="text-[9px] text-zinc-300">✅ 5,000 $SHRK in your wallet</p>
-            </div>
-            <p class="text-[9px] text-zinc-500 uppercase font-black tracking-widest mb-3">Actions</p>
-            <div class="space-y-3 mb-4">
-                <div class="flex items-start gap-3"><span class="text-lg">⚡</span><div><p class="text-white text-[9px] font-black">BOOST — $0.29</p><p class="text-zinc-500 text-[8px]">+10,000 HP. 70% goes to the creator.</p></div></div>
-                <div class="flex items-start gap-3"><span class="text-lg">💀</span><div><p class="text-white text-[9px] font-black">EAT — $0.02</p><p class="text-zinc-500 text-[8px]">-200 HP. Once per video.</p></div></div>
-                <div class="flex items-start gap-3"><span class="text-lg">⚖️</span><div><p class="text-white text-[9px] font-black">REPORT — $0.09</p><p class="text-zinc-500 text-[8px]">100% Limbo Fund. Refund + reward if taken down. Once per video.</p></div></div>
-                <div class="flex items-start gap-3"><span class="text-lg">🔁</span><div><p class="text-white text-[9px] font-black">REPOST — Free</p><p class="text-zinc-500 text-[8px]">Earn 10% from every interaction on your repost.</p></div></div>
-                <div class="flex items-start gap-3"><span class="text-lg">💚</span><div><p class="text-white text-[9px] font-black">REVIVE — $2.99</p><p class="text-zinc-500 text-[8px]">Restore video to 90,000 HP. Paid in SOL.</p></div></div>
-                <div class="flex items-start gap-3"><span class="text-lg">📤</span><div><p class="text-white text-[9px] font-black">UPLOAD — Free</p><p class="text-zinc-500 text-[8px]">Upload your video. Starts with 90,000 HP.</p></div></div>
-            </div>
-            <div class="p-3 bg-zinc-800/50 rounded-xl mb-3">
-                <p class="text-white font-black text-[9px] mb-2 uppercase tracking-widest">HP System</p>
-                <p class="text-[9px] text-zinc-400">Starts at 90,000 HP • -10,000/day • 0 HP = video gone dark</p>
-                <p class="text-[8px] mt-2"><span class="text-blue-400 font-bold">● &gt;30k Healthy</span> &nbsp;<span class="text-yellow-400 font-bold">● 10-30k Fading</span> &nbsp;<span class="text-red-400 font-bold">● &lt;10k Critical</span></p>
-            </div>
-            <div class="p-3 bg-red-900/10 border border-red-500/20 rounded-xl">
-                <p class="text-red-400 font-black text-[9px] mb-2 uppercase tracking-widest">⚖️ Justice System</p>
-                <p class="text-[9px] text-zinc-400">&gt;75% reports = video taken down. Reporters get refund + reward.</p>
-            </div>
-            <p class="text-[8px] text-zinc-600 text-center mt-4">vorax.zone • Powered by Solana & $SHRK</p>
-        </div>
-
     </div>
 
     <!-- EAT CONFIRM -->
@@ -1546,8 +1486,13 @@ window.connectWallet = async () => {
 // UI HELPERS
 // ==============================================
 window.toggleComments = () => {
-    const d=document.getElementById('comment-drawer');
-    if(d){d.classList.toggle('translate-y-full');d.classList.toggle('translate-y-0');}
+    const d = document.getElementById('comment-drawer');
+    if(!d) return;
+    const isOpen = !d.classList.contains('translate-y-full');
+    d.classList.toggle('translate-y-full');
+    d.classList.toggle('translate-y-0');
+    // Carica commenti da Supabase quando si apre
+    if(!isOpen) loadComments(currentVideo().id);
 };
 window.togglePlay = () => {
     if(isBanned||currentHP<=0) return;
@@ -1562,11 +1507,67 @@ function toggleMute(){
     i.className=v.muted?'fas fa-volume-mute text-lg text-gray-500':'fas fa-volume-up text-lg text-white animate-pulse';
     showToast(v.muted?'Muted 🔇':'Unmuted 🔊');
 }
-function postComment(){
-    const i=document.getElementById('comment-input');
-    if(!i.value.trim()) return;
-    document.getElementById('comments-list').insertAdjacentHTML('afterbegin','<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-500 flex-shrink-0"></div><div><p class="text-xs font-bold text-gray-400">@You</p><p class="text-sm text-gray-200">'+i.value+'</p></div></div>');
-    i.value='';
+async function postComment(){
+    const input = document.getElementById('comment-input');
+    const text  = input?.value?.trim();
+    if(!text) return;
+    const vid    = currentVideo().id;
+    const addr   = window.solana?.publicKey?.toString() || null;
+    const creator = currentVideo().creator || '@anon';
+
+    // Mostra subito il commento (ottimistico)
+    const username = addr ? addr.slice(0,4)+'...'+addr.slice(-4) : '@guest';
+    appendComment(username, text, true);
+    input.value = '';
+
+    // Salva su Supabase
+    try {
+        await db.from('comments').insert({
+            video_id: vid,
+            wallet:   addr,
+            username: addr ? username : '@guest',
+            text:     text,
+        });
+    } catch(e) {
+        console.warn('Comment save failed:', e);
+    }
+}
+
+function appendComment(username, text, isOwn=false){
+    const list = document.getElementById('comments-list');
+    if(!list) return;
+    const color = isOwn ? 'bg-blue-600' : 'bg-zinc-700';
+    const nameColor = isOwn ? 'text-blue-400' : 'text-zinc-400';
+    list.insertAdjacentHTML('afterbegin', `
+        <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full ${color} flex-shrink-0 flex items-center justify-center text-white text-[10px] font-black">${username[0]?.toUpperCase()||'?'}</div>
+            <div><p class="text-xs font-bold ${nameColor}">${username}</p><p class="text-sm text-gray-200">${text}</p></div>
+        </div>
+    `);
+}
+
+async function loadComments(videoId){
+    const list = document.getElementById('comments-list');
+    if(!list) return;
+    list.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-4">Loading...</p>';
+    try {
+        const { data } = await db.from('comments')
+            .select('username, text, created_at')
+            .eq('video_id', videoId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        // Aggiorna badge contatore
+        const cc = document.getElementById('comment-count');
+        if(cc) cc.innerText = data?.length || 0;
+        if(!data || data.length === 0){
+            list.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-4">No comments yet — be first 🦈</p>';
+            return;
+        }
+        list.innerHTML = '';
+        data.forEach(c => appendComment(c.username || '@anon', c.text));
+    } catch(e){
+        list.innerHTML = '<p class="text-[9px] text-zinc-600 text-center py-4">Could not load comments</p>';
+    }
 }
 window.toggleFollow = () => {
     const cr=currentVideo().creator;
@@ -1716,7 +1717,19 @@ function handleSwipeDirection(dir){
 // ==============================================
 window.addEventListener('load', async ()=>{
     if(window.solana?.isPhantom){
-        try{ await window.solana.connect({onlyIfTrusted:true}); }
+        try{
+            const resp = await window.solana.connect({onlyIfTrusted:true});
+            if(resp?.publicKey){
+                const pk = resp.publicKey;
+                window._walletConnected = true;
+                window._walletPubkey = pk;
+                const addr = pk.toString();
+                document.getElementById('wallet-dot').className='w-2 h-2 rounded-full bg-green-500 animate-pulse';
+                document.getElementById('wallet-text').innerText = addr.slice(0,4)+'...'+addr.slice(-4);
+                window.updateUploadWalletUI(addr);
+                window.updatePoolDisplay();
+            }
+        }
         catch{ }
     }
     await window.updateOraclePrice();
